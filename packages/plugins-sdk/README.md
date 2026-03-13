@@ -18,6 +18,8 @@ Use these exports when building a plugin:
 | `withBudgetAsync(fn, budgetMs?)` | Run async plugin work under a time budget. |
 | `registerPluginNodeCompiler(pluginId, nodeKind, compile)` | Register a compiler for plugin graph nodes (custom node types). |
 | `createPluginNodeCompiler()` | Build the callback to pass into `graphToAst(graph, { compilePluginNode })`. |
+| `registerPluginPanel(descriptor)` | Register a UI panel (custom visual editor) for the Plugins section. |
+| `getPluginPanels()` | List registered panels (used by the studio to render them). |
 
 The editor uses these internally; plugins typically only call the registration and validation APIs above.
 

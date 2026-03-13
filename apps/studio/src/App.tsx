@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { astVersion, EvalScheduler, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
 import { generateDocument } from "@strudel-studio/code-generator";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
@@ -26,6 +27,7 @@ import {
   listPluginIds,
   getPlugin,
   createPluginNodeCompiler,
+  getPluginPanels,
 } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { GraphCanvas } from "@strudel-studio/ui-components";
@@ -744,6 +746,33 @@ export default function App() {
               );
             })}
           </ul>
+        )}
+        {getPluginPanels().length > 0 && (
+          <div style={{ marginTop: "1rem" }}>
+            <h3 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
+              Plugin panels
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
+              Custom UI from plugins (v1.0 visual editors).
+            </p>
+            {getPluginPanels().map((panel) => (
+              <div
+                key={panel.pluginId}
+                style={{
+                  marginBottom: "1rem",
+                  padding: "0.75rem",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  backgroundColor: "#fafafa",
+                }}
+              >
+                <h4 style={{ fontSize: "0.9rem", marginBottom: "0.35rem" }}>
+                  {panel.title ?? panel.pluginId}
+                </h4>
+                {panel.render() as ReactNode}
+              </div>
+            ))}
+          </div>
         )}
       </section>
 

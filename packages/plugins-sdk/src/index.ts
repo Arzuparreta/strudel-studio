@@ -23,3 +23,8 @@ export {
   registerPluginNodeCompiler,
   createPluginNodeCompiler,
 } from "./pluginNodeCompiler.js";
+export {
+  registerPluginPanel,
+  getPluginPanels,
+  type PluginPanelDescriptor,
+} from "./pluginPanels.js";

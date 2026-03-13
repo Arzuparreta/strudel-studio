@@ -1,7 +1,9 @@
+import { createElement } from "react";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 import {
   registerPluginFromManifest,
   registerPluginTransform,
+  registerPluginPanel,
 } from "@strudel-studio/plugins-sdk";
 import manifest from "../manifest.json";
 
@@ -34,6 +36,18 @@ registerPluginTransform({
     { name: "hits", type: "number", default: 3 },
     { name: "steps", type: "number", default: 4 },
   ],
+});
+
+// v1.0: custom visual editor — panel in the Plugins section.
+registerPluginPanel({
+  pluginId: PLUGIN_ID,
+  title: "Euclidean",
+  render: () =>
+    createElement(
+      "p",
+      { style: { margin: 0, fontSize: "0.9rem", color: "#555" } },
+      "Use the \u201ceuclidean\u201d transform in the + Add transform picker. Args: hits, steps (e.g. 3, 4).",
+    ),
 });
 
 export { PLUGIN_ID, euclideanTransform };

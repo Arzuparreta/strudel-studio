@@ -4,3 +4,5 @@
  */
 
 export { astVersion } from "@strudel-studio/code-generator";
+export { evaluateToPattern } from "./evaluate";
+

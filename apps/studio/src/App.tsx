@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { astVersion, EvalScheduler, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
 import { generateDocument } from "@strudel-studio/code-generator";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
@@ -92,6 +92,12 @@ export default function App() {
     null,
   );
 
+  /** v0.9.2: ref to last evaluated pattern for one-shot scrubbed queryArc (architecture §9). */
+  const lastPatternRef = useRef<{
+    queryArc: (from: number, to: number) => unknown[];
+  } | null>(null);
+  const scrubTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
   const [hasOpaques, setHasOpaques] = useState(false);
@@ -107,6 +113,15 @@ export default function App() {
   );
 
   const hapCache = useMemo(() => new HapCache(), []);
+
+  useEffect(() => {
+    return () => {
+      if (scrubTimeoutRef.current) {
+        clearTimeout(scrubTimeoutRef.current);
+        scrubTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Debounced parse whenever the source changes.
   useEffect(() => {
@@ -182,11 +197,32 @@ export default function App() {
   }
 
   /** v0.9.1: Change timeline display window and refresh haps from cache (inspector reads only cache). */
+  /** v0.9.2: When window !== [0,1], one-shot throttled queryArc (scrub) and merge into cache (architecture §9). */
   function handleTimelineWindowChange(next: { from: number; to: number }) {
     const from = Math.max(0, Number(next.from));
     const to = Math.max(from + 0.25, Number(next.to));
     setTimelineWindow({ from, to });
     setHaps(hapCache.getHaps({ from, to }));
+
+    if (scrubTimeoutRef.current) {
+      clearTimeout(scrubTimeoutRef.current);
+      scrubTimeoutRef.current = null;
+    }
+    const isEvalWindow = from === 0 && to === 1;
+    if (!isEvalWindow && lastPatternRef.current) {
+      scrubTimeoutRef.current = setTimeout(() => {
+        scrubTimeoutRef.current = null;
+        const pattern = lastPatternRef.current;
+        if (!pattern) return;
+        try {
+          const rawHaps = pattern.queryArc(from, to);
+          hapCache.recordHaps({ from, to }, rawHaps, 0);
+          setHaps(hapCache.getHaps({ from, to }));
+        } catch {
+          // Scrub failed; leave haps as cache slice only
+        }
+      }, 300);
+    }
   }
 
   /** v0.8: Import current code into the graph (when parse yields AST). */
@@ -231,15 +267,18 @@ export default function App() {
         queryArc?: (from: number, to: number) => unknown[];
       };
       if (typeof queryable.queryArc === "function") {
+        lastPatternRef.current = queryable;
         const evalWindow = { from: 0, to: 1 };
         const rawHaps = queryable.queryArc(evalWindow.from, evalWindow.to);
         hapCache.clear();
         hapCache.recordHaps(evalWindow, rawHaps, 0);
         setHaps(hapCache.getHaps(timelineWindow));
       } else {
+        lastPatternRef.current = null;
         setHaps([]);
       }
     } catch {
+      lastPatternRef.current = null;
       setHaps([]);
     }
 
@@ -388,7 +427,7 @@ export default function App() {
         <h2>Pattern inspector</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
           Read-only view of recent haps from the evaluated pattern.
-          Use the time window below to show a slice of the cache (filled at evaluation for 0–1).
+          Time window 0–1 is filled at evaluation; other windows use a one-shot scrub (throttled).
         </p>
         <HapList haps={haps} />
         <div style={{ marginTop: "1rem" }}>

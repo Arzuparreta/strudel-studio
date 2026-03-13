@@ -981,6 +981,142 @@ export default function App() {
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>
+        <h2>Live control (v1.2)</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Parameter sliders for the selected lane’s transforms. Changes update the
+          graph and re-eval after a short delay. Select a lane in the graph or
+          lane list.
+        </p>
+        {selectedGraphNodeId &&
+        graph.nodes.some(
+          (n) => n.id === selectedGraphNodeId && n.type === "lane",
+        ) ? (
+          (() => {
+            const lane = graph.nodes.find(
+              (n) => n.id === selectedGraphNodeId && n.type === "lane",
+            ) as { id: string; head: string } | undefined;
+            const chain = lane
+              ? (graph.nodes.find(
+                  (n) => n.id === lane.head && n.type === "transformChain",
+                ) as
+                  | {
+                      methods: { id: string; name: string; args: unknown[] }[];
+                    }
+                  | undefined)
+              : undefined;
+            if (!chain || chain.methods.length === 0) {
+              return (
+                <p style={{ fontSize: "0.85rem", color: "#888" }}>
+                  Selected lane has no transforms. Add transforms in the lane
+                  editor above to control them here.
+                </p>
+              );
+            }
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {chain.methods.map((m) => {
+                  const spec = getTransformSpec(m.name);
+                  const argSpecs = spec?.args ?? [];
+                  const numericIndices: number[] = [];
+                  argSpecs.forEach((arg, i) => {
+                    if (arg.type === "number") numericIndices.push(i);
+                  });
+                  if (numericIndices.length === 0) return null;
+                  return (
+                    <div
+                      key={m.id}
+                      style={{
+                        padding: "0.5rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        backgroundColor: "#fafafa",
+                      }}
+                    >
+                      <strong>.{m.name}</strong>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.5rem",
+                          marginTop: "0.35rem",
+                        }}
+                      >
+                        {numericIndices.map((i) => {
+                          const argSpec = argSpecs[i];
+                          const specMin =
+                            argSpec?.type === "number" && typeof argSpec.min === "number"
+                              ? argSpec.min
+                              : undefined;
+                          const specMax =
+                            argSpec?.type === "number" && typeof argSpec.max === "number"
+                              ? argSpec.max
+                              : undefined;
+                          const min = specMin ?? (specMax != null ? 0 : 0);
+                          const max =
+                            specMax ??
+                            (specMin != null && specMin >= 1 ? Math.max(specMin, 16) : 1);
+                          const val = Number(m.args[i]);
+                          const numVal =
+                            Number.isFinite(val) && val >= min && val <= max
+                              ? val
+                              : min;
+                          return (
+                            <label
+                              key={i}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                              }}
+                            >
+                              <span style={{ minWidth: "2.5rem" }}>
+                                {argSpec?.name ?? `arg ${i}`}: {numVal.toFixed(2)}
+                              </span>
+                              <input
+                                type="range"
+                                min={min}
+                                max={max}
+                                step={max - min > 10 ? 0.1 : 0.01}
+                                value={numVal}
+                                onChange={(e) => {
+                                  const nextVal = Number(e.target.value);
+                                  const nextArgs = [...m.args];
+                                  nextArgs[i] = nextVal;
+                                  const next = updateLaneTransformArgs(
+                                    graph,
+                                    selectedGraphNodeId,
+                                    m.id,
+                                    nextArgs,
+                                  );
+                                  updateSourceFromGraph(next, mutedLanes);
+                                }}
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()
+        ) : (
+          <p style={{ fontSize: "0.85rem", color: "#888" }}>
+            Select a lane in the composition graph or in the lane list above to
+            see parameter sliders.
+          </p>
+        )}
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
         <h2>Composition graph</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
           Visualization of the PatternGraph: parallel/serial root and lane

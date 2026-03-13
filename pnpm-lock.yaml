@@ -29,6 +29,9 @@ importers:
       '@strudel-studio/strudel-bridge':
         specifier: workspace:*
         version: link:../../packages/strudel-bridge
+      '@strudel-studio/strudel-parser':
+        specifier: workspace:*
+        version: link:../../packages/strudel-parser
       react:
         specifier: ^19.0.0
         version: 19.2.4

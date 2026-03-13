@@ -3,14 +3,20 @@ import { parseToAstOrOpaque } from "./parse.js";
 
 describe("parseToAstOrOpaque subset parsing", () => {
   it("parses simple s() expression into a TransformChain", () => {
-    const source = 's("[bd ~]")';
+    const source = 's("bd buddy")';
 
     const result = parseToAstOrOpaque(source);
 
     expect(result.opaques).toHaveLength(0);
     expect(result.ast).not.toBeNull();
-    expect(result.ast?.base).toEqual({ kind: "s", mini: "[bd ~]" });
+    expect(result.ast?.base.kind).toBe("s");
+    expect(result.ast?.base.mini).toBe("bd buddy");
     expect(result.ast?.methods).toEqual([]);
+
+    const range = result.ast?.base.miniRange;
+    expect(range).toBeDefined();
+    if (!range) return;
+    expect(source.slice(range.start, range.end)).toBe('"bd buddy"');
   });
 
   it("parses s() with whitelisted method chain", () => {
@@ -20,7 +26,8 @@ describe("parseToAstOrOpaque subset parsing", () => {
 
     expect(result.opaques).toHaveLength(0);
     expect(result.ast).not.toBeNull();
-    expect(result.ast?.base).toEqual({ kind: "s", mini: "[bd ~]" });
+    expect(result.ast?.base.kind).toBe("s");
+    expect(result.ast?.base.mini).toBe("[bd ~]");
     expect(result.ast?.methods.map((m) => m.name)).toEqual(["bank", "slow"]);
     expect(result.ast?.methods[0]?.args).toEqual(["tr909"]);
     expect(result.ast?.methods[1]?.args).toEqual([2]);

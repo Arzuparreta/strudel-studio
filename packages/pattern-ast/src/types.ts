@@ -13,11 +13,23 @@ export type NodeId = string;
 /** Literal values allowed in method arguments (v0.1). */
 export type Literal = string | number | boolean;
 
+/** Character range in the source document: [start, end). */
+export interface MiniSourceRange {
+  start: number;
+  end: number;
+}
+
 /** Base pattern constructor: `s("mini")` or `note("mini")`. */
 export interface BaseCall {
   kind: "s" | "note";
   /** Mini notation string (e.g. "[bd ~] [sd ~]" or "c2 eb2"). */
   mini: string;
+  /**
+   * Optional source range for the mini string literal, when known.
+   * This is populated by the subset parser (v0.2) so later phases
+   * can map edits in the mini string back to AST/graph paths.
+   */
+  miniRange?: MiniSourceRange;
 }
 
 /** Single method invocation in a chain (e.g. `.bank("tr909")`, `.slow(2)`). */

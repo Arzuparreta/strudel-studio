@@ -126,10 +126,15 @@ function extractTransformChain(expr: any, source: string): TransformChain | null
         if (current.arguments.length !== 1 || !isLiteralNode(current.arguments[0])) {
           return null;
         }
-        const mini = extractLiteral(current.arguments[0] as LiteralNode);
+        const miniLiteral = current.arguments[0] as LiteralNode;
+        const mini = extractLiteral(miniLiteral);
         if (mini == null || typeof mini !== "string") {
           return null;
         }
+        const miniRange =
+          typeof miniLiteral.start === "number" && typeof miniLiteral.end === "number"
+            ? { start: miniLiteral.start, end: miniLiteral.end }
+            : undefined;
         // We reached the base; stop walking.
         const baseKind = callee.name as "s" | "note";
         return {
@@ -137,6 +142,7 @@ function extractTransformChain(expr: any, source: string): TransformChain | null
           base: {
             kind: baseKind,
             mini,
+            miniRange,
           },
           methods: methods.reverse().map((m, index) => ({
             id: `m${index + 1}`,

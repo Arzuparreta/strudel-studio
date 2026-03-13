@@ -567,6 +567,35 @@ export default function App() {
           >
             Add lane under parallel root
           </button>
+          <button
+            type="button"
+            disabled={
+              !canEditGraph ||
+              !selectedGraphNodeId ||
+              !graph.nodes.some(
+                (n) => n.id === selectedGraphNodeId && n.type === "lane",
+              )
+            }
+            onClick={() => {
+              if (!canEditGraph || !selectedGraphNodeId) return;
+              const node = graph.nodes.find(
+                (n) => n.id === selectedGraphNodeId,
+              );
+              if (!node || node.type !== "lane") {
+                return;
+              }
+              const next = deleteLane(graph, node.id);
+              setLaneTransformSelections((prev) => {
+                const nextSelections = { ...prev };
+                delete nextSelections[node.id];
+                return nextSelections;
+              });
+              setSelectedGraphNodeId(null);
+              updateSourceFromGraph(next);
+            }}
+          >
+            Delete selected lane
+          </button>
           {!canEditGraph && (
             <span style={{ fontSize: "0.8rem", color: "#777" }}>
               Editing is disabled while the document contains opaque regions or

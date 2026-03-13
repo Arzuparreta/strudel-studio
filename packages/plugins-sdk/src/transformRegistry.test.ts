@@ -58,5 +58,66 @@ describe("transform registry", () => {
     expect(firstChild.methods[0]?.name).toBe("slow");
     expect(firstChild.methods[0]?.args).toEqual([2]);
   });
+
+  it("supports multi-lane graphs with different registry transforms", () => {
+    const slow = getTransformSpec("slow");
+    const gain = getTransformSpec("gain");
+    expect(slow).toBeDefined();
+    expect(gain).toBeDefined();
+
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_1", "lane_2"],
+        },
+        {
+          id: "lane_1",
+          type: "lane",
+          head: "chain_1",
+        },
+        {
+          id: "chain_1",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~" },
+          methods: [],
+        },
+        {
+          id: "lane_2",
+          type: "lane",
+          head: "chain_2",
+        },
+        {
+          id: "chain_2",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "sd ~" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const withSlow = addTransformToLane(graph, "lane_1", {
+      name: slow!.name,
+      args: slow!.defaultArgs,
+    });
+    const withBoth = addTransformToLane(withSlow, "lane_2", {
+      name: gain!.name,
+      args: gain!.defaultArgs,
+    });
+
+    const doc = graphToAst(withBoth);
+    if (!("call" in doc) || doc.call !== "stack") {
+      throw new Error("expected stack composite pattern");
+    }
+    const children = (doc as any).children ?? [];
+    expect(children).toHaveLength(2);
+    expect(children[0].methods[0]?.name).toBe("slow");
+    expect(children[1].methods[0]?.name).toBe("gain");
+  });
 });
 

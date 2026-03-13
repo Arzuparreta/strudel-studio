@@ -16,7 +16,7 @@ import {
   reorderLaneTransforms,
   validatePatternGraph,
 } from "@strudel-studio/pattern-graph";
-import { getTransformSpec } from "@strudel-studio/plugins-sdk";
+import { TRANSFORM_REGISTRY, getTransformSpec } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
@@ -85,6 +85,8 @@ export default function App() {
   const [status, setStatus] = useState<string>("idle");
   const [parseInfo, setParseInfo] = useState<string>("not parsed yet");
   const [graphError, setGraphError] = useState<string | null>(null);
+  const [selectedTransformName, setSelectedTransformName] =
+    useState<string>("slow");
 
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
@@ -229,6 +231,33 @@ export default function App() {
           Stacked lanes from pattern graph (parallel root). Compile to code to
           insert the generated Strudel into the editor above.
         </p>
+        <div
+          style={{
+            marginBottom: "0.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.85rem",
+            color: "#555",
+          }}
+        >
+          <span>Default transform for + Add transform:</span>
+          <select
+            value={selectedTransformName}
+            onChange={(e) => setSelectedTransformName(e.target.value)}
+            style={{
+              fontFamily: "inherit",
+              fontSize: "0.85rem",
+              padding: "0.1rem 0.25rem",
+            }}
+          >
+            {Object.keys(TRANSFORM_REGISTRY).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
         <LaneStack
           graph={graph}
           {...(canEditGraph
@@ -256,14 +285,14 @@ export default function App() {
                 onAddTransform: (laneId: string) => {
                   // For v0.4/v0.5, provide a simple default transform sourced
                   // from the central registry, with a safe fallback.
-                  const spec =
-                    getTransformSpec("slow") ?? { name: "slow", defaultArgs: [2] };
+                  const spec = getTransformSpec(selectedTransformName);
+                  const name = spec?.name ?? selectedTransformName;
+                  const args = Array.isArray(spec?.defaultArgs)
+                    ? spec!.defaultArgs
+                    : [];
                   const next = addTransformToLane(graph, laneId, {
-                    name: spec.name,
-                    args:
-                      "defaultArgs" in spec && Array.isArray((spec as any).defaultArgs)
-                        ? (spec as any).defaultArgs
-                        : [2],
+                    name,
+                    args,
                   });
                   updateSourceFromGraph(next);
                 },

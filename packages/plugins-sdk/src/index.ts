@@ -16,3 +16,4 @@ export {
   type TransformArgSpec,
   type TransformArgType,
 } from "./transformRegistry.js";
+export { parseTransformArgsString } from "./parseTransformArgs.js";

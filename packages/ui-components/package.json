@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@strudel-studio/pattern-graph": "workspace:*",
+    "@strudel-studio/plugins-sdk": "workspace:*",
     "react": "^19.0.0"
   },
   "peerDependencies": {

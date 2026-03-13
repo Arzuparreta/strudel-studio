@@ -107,14 +107,15 @@ export function getTransformSpec(name: string): TransformSpec | undefined {
 /**
  * Coerce a raw argument list according to a TransformSpec's arg metadata.
  *
- * Rules (intentionally simple for v0.6):
+ * Rules (Before v1.0 refinement 1):
  * - If no arg metadata is present, return raw as-is.
  * - For each arg spec:
- *   - If raw[i] is missing or undefined, use argSpec.default when provided.
+ *   - If raw[i] is missing or undefined, use argSpec.default when provided (optional-arg behavior).
  *   - For type "number": coerce via Number(), clamp to [min, max] when set.
  *   - For type "string": String(value).
  *   - For type "boolean": truthy → true, falsy → false.
  * - Extra raw args beyond spec.args length are preserved unchanged.
+ * - Empty input ([]) results in all defaults when spec provides them.
  */
 export function coerceTransformArgs(
   spec: TransformSpec,

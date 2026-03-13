@@ -4,6 +4,7 @@
  */
 
 import type { PatternGraph, GraphNode, TransformChainNode, LaneNode } from "@strudel-studio/pattern-graph";
+import { parseTransformArgsString } from "@strudel-studio/plugins-sdk";
 import { getTopLevelTrackIds, getNodeLabel } from "./laneStackUtils.js";
 import { PatternGrid } from "./PatternGrid.js";
 
@@ -396,14 +397,16 @@ export function LaneStack({
                     {onChangeTransformArgs && (
                       <input
                         type="text"
-                        value={m.args.map((arg) => String(arg)).join(", ")}
+                        value={m.args
+                          .map((arg) =>
+                            arg === undefined ? "" : String(arg),
+                          )
+                          .join(", ")}
                         onChange={(e) => {
-                          const raw = e.target.value;
-                          const parts = raw
-                            .split(",")
-                            .map((p) => p.trim())
-                            .filter((p) => p.length > 0);
-                          onChangeTransformArgs(lane.id, m.id, parts);
+                          const parsed = parseTransformArgsString(
+                            e.target.value,
+                          );
+                          onChangeTransformArgs(lane.id, m.id, parsed);
                         }}
                         style={{
                           fontFamily: "inherit",

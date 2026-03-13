@@ -4,6 +4,7 @@ import {
   getTransformSpec,
   coerceTransformArgs,
 } from "./transformRegistry.js";
+import { parseTransformArgsString } from "./parseTransformArgs.js";
 import { addTransformToLane, graphToAst } from "@strudel-studio/pattern-graph";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 
@@ -30,6 +31,34 @@ describe("transform registry", () => {
     // gain: amount is number with default 1.
     expect(coerceTransformArgs(gain!, ["0.5"])).toEqual([0.5]);
     expect(coerceTransformArgs(gain!, [])).toEqual([1]);
+  });
+
+  it("parseTransformArgsString + coerce produces valid args (refinement 1)", () => {
+    const gain = getTransformSpec("gain");
+    const bank = getTransformSpec("bank");
+    expect(gain).toBeDefined();
+    expect(bank).toBeDefined();
+
+    // Parsed numbers (including -.5) then coerced.
+    expect(
+      coerceTransformArgs(gain!, parseTransformArgsString("-.5")),
+    ).toEqual([-0.5]);
+    expect(
+      coerceTransformArgs(gain!, parseTransformArgsString("0.5, ")),
+    ).toEqual([0.5, undefined]);
+
+    // Empty input → coercion applies defaults.
+    expect(coerceTransformArgs(gain!, parseTransformArgsString(""))).toEqual([
+      1,
+    ]);
+    expect(coerceTransformArgs(bank!, parseTransformArgsString(""))).toEqual([
+      "tr909",
+    ]);
+
+    // Quoted string for bank.
+    expect(
+      coerceTransformArgs(bank!, parseTransformArgsString('"tr808"')),
+    ).toEqual(["tr808"]);
   });
 
   it("integrates with graph → AST pipeline for a default transform", () => {

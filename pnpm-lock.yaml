@@ -204,6 +204,9 @@ importers:
       '@strudel-studio/pattern-graph':
         specifier: workspace:*
         version: link:../pattern-graph
+      '@strudel-studio/plugins-sdk':
+        specifier: workspace:*
+        version: link:../plugins-sdk
       react:
         specifier: ^19.0.0
         version: 19.2.4

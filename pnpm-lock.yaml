@@ -127,6 +127,25 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(jsdom@28.1.0)
 
+  packages/plugins-sdk:
+    dependencies:
+      '@strudel-studio/pattern-ast':
+        specifier: workspace:*
+        version: link:../pattern-ast
+      '@strudel-studio/pattern-graph':
+        specifier: workspace:*
+        version: link:../pattern-graph
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.6
+        version: 2.1.9(jsdom@28.1.0)
+
   packages/strudel-bridge:
     dependencies:
       '@strudel-studio/code-generator':
@@ -161,6 +180,19 @@ importers:
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(jsdom@28.1.0)
+
+  plugins/euclidean:
+    dependencies:
+      '@strudel-studio/pattern-ast':
+        specifier: workspace:*
+        version: link:../../packages/pattern-ast
+      '@strudel-studio/plugins-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugins-sdk
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
 
 packages:
 

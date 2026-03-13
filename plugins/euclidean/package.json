@@ -1,0 +1,19 @@
+{
+  "name": "@strudel-studio/plugin-euclidean",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@strudel-studio/plugins-sdk": "workspace:*",
+    "@strudel-studio/pattern-ast": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -3,6 +3,7 @@ import {
   TRANSFORM_REGISTRY,
   getTransformSpec,
   coerceTransformArgs,
+  type TransformSpec,
 } from "./transformRegistry.js";
 import { parseTransformArgsString } from "./parseTransformArgs.js";
 import { addTransformToLane, graphToAst } from "@strudel-studio/pattern-graph";
@@ -31,6 +32,21 @@ describe("transform registry", () => {
     // gain: amount is number with default 1.
     expect(coerceTransformArgs(gain!, ["0.5"])).toEqual([0.5]);
     expect(coerceTransformArgs(gain!, [])).toEqual([1]);
+  });
+
+  it("coerces multi-arg spec (custom args per transform)", () => {
+    const multiArgSpec: TransformSpec = {
+      name: "custom",
+      defaultArgs: [1, "x"],
+      args: [
+        { name: "n", type: "number", default: 1 },
+        { name: "s", type: "string", default: "x" },
+      ],
+    };
+    expect(coerceTransformArgs(multiArgSpec, [])).toEqual([1, "x"]);
+    expect(coerceTransformArgs(multiArgSpec, [2])).toEqual([2, "x"]);
+    expect(coerceTransformArgs(multiArgSpec, [3, "y"])).toEqual([3, "y"]);
+    expect(coerceTransformArgs(multiArgSpec, ["5", "z"])).toEqual([5, "z"]);
   });
 
   it("parseTransformArgsString + coerce produces valid args (refinement 1)", () => {

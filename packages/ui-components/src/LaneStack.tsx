@@ -4,7 +4,7 @@
  */
 
 import type { PatternGraph, GraphNode, TransformChainNode, LaneNode } from "@strudel-studio/pattern-graph";
-import { parseTransformArgsString } from "@strudel-studio/plugins-sdk";
+import { parseTransformArgsString, getTransformSpec } from "@strudel-studio/plugins-sdk";
 import { getTopLevelTrackIds, getNodeLabel } from "./laneStackUtils.js";
 import { PatternGrid } from "./PatternGrid.js";
 
@@ -394,28 +394,158 @@ export function LaneStack({
                       )}
                       )
                     </code>
-                    {onChangeTransformArgs && (
-                      <input
-                        type="text"
-                        value={m.args
-                          .map((arg) =>
-                            arg === undefined ? "" : String(arg),
-                          )
-                          .join(", ")}
-                        onChange={(e) => {
-                          const parsed = parseTransformArgsString(
-                            e.target.value,
-                          );
-                          onChangeTransformArgs(lane.id, m.id, parsed);
-                        }}
-                        style={{
-                          fontFamily: "inherit",
-                          fontSize: "0.75rem",
-                          padding: "0.1rem 0.25rem",
-                          minWidth: "4rem",
-                        }}
-                      />
-                    )}
+                    {onChangeTransformArgs && (() => {
+                      const spec = getTransformSpec(m.name);
+                      const usePicker =
+                        spec?.args && spec.args.length > 0;
+                      if (usePicker) {
+                        return (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.2rem",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            {spec!.args!.map((argSpec, i) => {
+                              const val = i < m.args.length ? m.args[i] : undefined;
+                              const display =
+                                val !== undefined && val !== null
+                                  ? String(val)
+                                  : argSpec.default !== undefined
+                                    ? String(argSpec.default)
+                                    : "";
+                              const updateArg = (next: unknown) => {
+                                const nextArgs = [...m.args];
+                                while (nextArgs.length < spec!.args!.length) {
+                                  nextArgs.push(
+                                    spec!.args![nextArgs.length]?.default,
+                                  );
+                                }
+                                nextArgs[i] = next;
+                                onChangeTransformArgs(
+                                  lane.id,
+                                  m.id,
+                                  nextArgs.slice(0, spec!.args!.length),
+                                );
+                              };
+                              if (argSpec.type === "number") {
+                                const numVal =
+                                  typeof val === "number" && !Number.isNaN(val)
+                                    ? val
+                                    : typeof argSpec.default === "number"
+                                      ? argSpec.default
+                                      : "";
+                                return (
+                                  <input
+                                    key={argSpec.name ?? i}
+                                    type="number"
+                                    aria-label={argSpec.name ?? `arg ${i}`}
+                                    value={numVal}
+                                    min={argSpec.min}
+                                    max={argSpec.max}
+                                    step={
+                                      typeof argSpec.min === "number" &&
+                                      typeof argSpec.max === "number"
+                                        ? "any"
+                                        : 1
+                                    }
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      if (v === "") {
+                                        updateArg(undefined);
+                                        return;
+                                      }
+                                      const n = Number(v);
+                                      updateArg(Number.isNaN(n) ? undefined : n);
+                                    }}
+                                    style={{
+                                      fontFamily: "inherit",
+                                      fontSize: "0.75rem",
+                                      padding: "0.1rem 0.25rem",
+                                      width: "3.5rem",
+                                    }}
+                                  />
+                                );
+                              }
+                              if (argSpec.type === "boolean") {
+                                return (
+                                  <label
+                                    key={argSpec.name ?? i}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "0.2rem",
+                                      fontSize: "0.75rem",
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      aria-label={argSpec.name ?? `arg ${i}`}
+                                      checked={
+                                        val === true ||
+                                        (val !== false &&
+                                          val !== undefined &&
+                                          val !== null &&
+                                          String(val).toLowerCase() === "true")
+                                      }
+                                      onChange={(e) =>
+                                        updateArg(e.target.checked)
+                                      }
+                                    />
+                                    {argSpec.name}
+                                  </label>
+                                );
+                              }
+                              return (
+                                <input
+                                  key={argSpec.name ?? i}
+                                  type="text"
+                                  aria-label={argSpec.name ?? `arg ${i}`}
+                                  value={display}
+                                  onChange={(e) =>
+                                    updateArg(
+                                      e.target.value === ""
+                                        ? undefined
+                                        : e.target.value,
+                                    )
+                                  }
+                                  style={{
+                                    fontFamily: "inherit",
+                                    fontSize: "0.75rem",
+                                    padding: "0.1rem 0.25rem",
+                                    minWidth: "4rem",
+                                  }}
+                                />
+                              );
+                            })}
+                          </span>
+                        );
+                      }
+                      return (
+                        <input
+                          type="text"
+                          value={m.args
+                            .map((arg) =>
+                              arg === undefined ? "" : String(arg),
+                            )
+                            .join(", ")}
+                          onChange={(e) => {
+                            const parsed = parseTransformArgsString(
+                              e.target.value,
+                            );
+                            onChangeTransformArgs(lane.id, m.id, parsed);
+                          }}
+                          style={{
+                            fontFamily: "inherit",
+                            fontSize: "0.75rem",
+                            padding: "0.1rem 0.25rem",
+                            minWidth: "4rem",
+                          }}
+                        />
+                      );
+                    })()}
                     {onReorderTransforms && chain.methods.length > 1 && (
                       <div style={{ display: "flex", gap: "0.15rem" }}>
                         <button

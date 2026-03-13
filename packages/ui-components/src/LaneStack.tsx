@@ -31,6 +31,10 @@ export interface LaneStackProps {
     transformId: string,
     nextArgs: unknown[],
   ) => void;
+  /** Optional per-lane selected transform names (for pickers). */
+  selectedTransformForLane?: Record<string, string>;
+  /** Optional callback to change the selected transform for a lane. */
+  onSelectTransformForLane?: (laneId: string, transformName: string) => void;
 }
 
 function findNode(graph: PatternGraph, id: string): GraphNode | undefined {
@@ -93,6 +97,8 @@ export function LaneStack({
   onAddTransform,
   onReorderTransforms,
   onRemoveTransform,
+  selectedTransformForLane,
+  onSelectTransformForLane,
 }: LaneStackProps) {
   const trackIds = getTopLevelTrackIds(graph);
   const isInteractive =
@@ -282,15 +288,41 @@ export function LaneStack({
                 }}
               >
                 <span style={{ fontSize: "0.8rem", color: "#555" }}>Transforms</span>
-                {onAddTransform && (
-                  <button
-                    type="button"
-                    onClick={() => onAddTransform(lane.id)}
-                    style={{ fontSize: "0.8rem" }}
-                  >
-                    + Add transform
-                  </button>
-                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  {onSelectTransformForLane && selectedTransformForLane && (
+                    <select
+                      value={selectedTransformForLane[lane.id] ?? ""}
+                      onChange={(e) =>
+                        onSelectTransformForLane(lane.id, e.target.value)
+                      }
+                      style={{
+                        fontFamily: "inherit",
+                        fontSize: "0.8rem",
+                        padding: "0.1rem 0.25rem",
+                      }}
+                    >
+                      <option value="">(default)</option>
+                      {/* The actual option list is controlled by the parent; when
+                          an empty value is selected, the parent can fall back to
+                          its own default choice. */}
+                    </select>
+                  )}
+                  {onAddTransform && (
+                    <button
+                      type="button"
+                      onClick={() => onAddTransform(lane.id)}
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      + Add transform
+                    </button>
+                  )}
+                </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                 {chain.methods.length === 0 && (

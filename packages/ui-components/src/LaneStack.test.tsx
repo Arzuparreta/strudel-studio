@@ -147,5 +147,54 @@ describe("LaneStack", () => {
     expect(calls[0].laneId).toBe("lane_drums");
     expect(calls[0].args).toEqual([4]);
   });
+
+  it("renders a per-lane transform selector when provided and emits changes", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_drums"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "chain_drums",
+        },
+        {
+          id: "chain_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const calls: Array<{ laneId: string; name: string }> = [];
+
+    const { container } = render(
+      <LaneStack
+        graph={graph}
+        onChangeBasePattern={() => {}}
+        selectedTransformForLane={{ lane_drums: "slow" }}
+        onSelectTransformForLane={(laneId, name) => {
+          calls.push({ laneId, name });
+        }}
+      />,
+    );
+
+    const select = container.querySelector("select") as HTMLSelectElement | null;
+    expect(select).not.toBeNull();
+    if (select) {
+      fireEvent.change(select, { target: { value: "gain" } });
+    }
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({ laneId: "lane_drums", name: "gain" });
+  });
 }
 

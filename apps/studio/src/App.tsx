@@ -93,6 +93,9 @@ export default function App() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [selectedTransformName, setSelectedTransformName] =
     useState<string>("slow");
+  const [laneTransformSelections, setLaneTransformSelections] = useState<
+    Record<string, string>
+  >({});
   const [haps, setHaps] = useState<import("@strudel-studio/strudel-bridge").Hap[]>([]);
 
   // Debounced parse state: last successful parse result.
@@ -298,7 +301,11 @@ export default function App() {
           {...(canEditGraph
             ? {
                 onAddLane: () => {
-                  const { graph: next } = addLane(graph);
+                  const { graph: next, laneId } = addLane(graph);
+                  setLaneTransformSelections((prev) => ({
+                    ...prev,
+                    [laneId]: selectedTransformName,
+                  }));
                   updateSourceFromGraph(next);
                 },
                 onDeleteLane: (laneId: string) => {
@@ -320,8 +327,10 @@ export default function App() {
                 onAddTransform: (laneId: string) => {
                   // For v0.4/v0.5, provide a simple default transform sourced
                   // from the central registry, with a safe fallback.
-                  const spec = getTransformSpec(selectedTransformName);
-                  const name = spec?.name ?? selectedTransformName;
+                  const transformName =
+                    laneTransformSelections[laneId] ?? selectedTransformName;
+                  const spec = getTransformSpec(transformName);
+                  const name = spec?.name ?? transformName;
                   const args = spec
                     ? coerceTransformArgs(spec, spec.defaultArgs)
                     : [];
@@ -351,6 +360,13 @@ export default function App() {
                     nextArgs,
                   );
                   updateSourceFromGraph(next);
+                },
+                selectedTransformForLane: laneTransformSelections,
+                onSelectTransformForLane: (laneId: string, transformName: string) => {
+                  setLaneTransformSelections((prev) => ({
+                    ...prev,
+                    [laneId]: transformName,
+                  }));
                 },
               }
             : {})}

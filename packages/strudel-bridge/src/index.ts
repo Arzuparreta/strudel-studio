@@ -4,6 +4,6 @@
  */
 
 export { astVersion } from "@strudel-studio/code-generator";
-export { evaluateToPattern } from "./evaluate";
+export { evaluateToPattern, hushAll } from "./evaluate";
 export { EvalScheduler } from "./evalScheduler.js";
 

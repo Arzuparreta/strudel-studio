@@ -5,6 +5,7 @@ let initialized = false;
 type StrudelWebModule = {
   initStrudel: () => void;
   evaluate: (code: string) => unknown;
+  hush?: () => void;
 };
 
 async function loadStrudelWeb(): Promise<StrudelWebModule> {
@@ -36,5 +37,15 @@ export async function evaluateToPattern(source: string): Promise<Pattern | null>
     return null;
   }
 }
+
+export async function hushAll(): Promise<void> {
+  const mod = await loadStrudelWeb();
+  const hushFn = mod.hush ?? (mod as any).hush;
+
+  if (typeof hushFn === "function") {
+    hushFn();
+  }
+}
+
 
 

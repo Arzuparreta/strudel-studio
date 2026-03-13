@@ -2,6 +2,8 @@
 .aider.chat.history.md
 .aider.input.history
 
+.cursor
+
 node_modules
 dist
 coverage

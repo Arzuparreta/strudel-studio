@@ -1,22 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  astVersion,
-  EvalScheduler,
-} from "@strudel-studio/strudel-bridge";
+import { astVersion, EvalScheduler, hushAll } from "@strudel-studio/strudel-bridge";
 import { generate } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 
 const demoAst: TransformChain = {
   id: "demo-chain",
   base: {
-    kind: "s",
-    mini: "[bd ~] [sd ~]",
+    kind: "note",
+    mini: "c3 eb3",
   },
   methods: [
     {
-      id: "m-bank",
-      name: "bank",
-      args: ["tr808"],
+      id: "m-synth",
+      name: "s",
+      args: ["sawtooth"],
     },
     {
       id: "m-slow",
@@ -57,7 +54,22 @@ export default function App() {
       return;
     }
 
-    setStatus("evaluated pattern (ready for playback)");
+    const playable = result.pattern as typeof result.pattern & {
+      play?: () => void;
+    };
+
+    if (typeof playable.play === "function") {
+      playable.play();
+      setStatus("playing pattern");
+      return;
+    }
+
+    setStatus("evaluated pattern (no play() method found)");
+  }
+
+  async function handleStop() {
+    await hushAll();
+    setStatus("stopped");
   }
 
   return (
@@ -79,7 +91,10 @@ export default function App() {
         />
         <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
           <button type="button" onClick={handleEvaluate}>
-            Generate &amp; Evaluate
+            Generate &amp; Play
+          </button>
+          <button type="button" onClick={handleStop}>
+            Stop
           </button>
           <span>{status}</span>
         </div>

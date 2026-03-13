@@ -7,11 +7,12 @@ vi.mock("@strudel/web", () => ({
     // Minimal Pattern-like surface: just enough for the type guard.
     queryArc: () => [],
   })),
+  hush: vi.fn(),
 }));
 
 // Import after mocking so the bridge uses the mocked implementation.
-import { evaluateToPattern, isPattern } from "./evaluate.js";
-import { evaluate as mockedEvaluate } from "@strudel/web";
+import { evaluateToPattern, hushAll, isPattern } from "./evaluate.js";
+import { evaluate as mockedEvaluate, hush as mockedHush } from "@strudel/web";
 
 describe("evaluateToPattern", () => {
   beforeEach(() => {
@@ -45,6 +46,11 @@ describe("evaluateToPattern", () => {
 
     const pattern = await evaluateToPattern("42");
     expect(pattern).toBeNull();
+  });
+
+  it("calls hush from @strudel/web when hushAll is invoked", async () => {
+    await hushAll();
+    expect(mockedHush).toHaveBeenCalledTimes(1);
   });
 });
 

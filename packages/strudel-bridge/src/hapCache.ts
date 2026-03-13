@@ -17,6 +17,39 @@ export interface Hap {
   bufferGeneration: number;
 }
 
+/**
+ * Extract start/end from a raw Strudel hap when possible.
+ * Strudel events may have part/whole as [begin, end] or { start, end } or { begin, end }.
+ * Falls back to the query window when the raw hap has no part/whole.
+ */
+function spanFromRaw(raw: unknown, window: HapCacheWindow): { start: number; end: number } {
+  if (raw == null || typeof raw !== "object") {
+    return { start: window.from, end: window.to };
+  }
+  const obj = raw as Record<string, unknown>;
+  const span = obj.part ?? obj.whole;
+  if (Array.isArray(span) && span.length >= 2 && typeof span[0] === "number" && typeof span[1] === "number") {
+    return { start: span[0], end: span[1] };
+  }
+  if (span != null && typeof span === "object" && !Array.isArray(span)) {
+    const s = span as Record<string, unknown>;
+    const start = (s.start ?? s.begin) as number | undefined;
+    const end = (s.end ?? (s as Record<string, unknown>).finish) as number | undefined;
+    if (typeof start === "number" && typeof end === "number") {
+      return { start, end };
+    }
+  }
+  return { start: window.from, end: window.to };
+}
+
+/** Get the display value from a raw Strudel hap (value field or the hap itself). */
+function valueFromRaw(raw: unknown): unknown {
+  if (raw != null && typeof raw === "object" && "value" in (raw as object)) {
+    return (raw as { value: unknown }).value;
+  }
+  return raw;
+}
+
 export interface HapCacheWindow {
   from: number;
   to: number;
@@ -49,15 +82,19 @@ export class HapCache {
    * Record a batch of haps for a given window and buffer generation.
    *
    * The caller should obtain these by calling `pattern.queryArc(from, to)`
-   * on the active buffer pattern and mapping to the fields needed here.
+   * on the active buffer pattern. Each raw hap may have part/whole timespans;
+   * when present, per-event start/end are used for timeline display.
    */
   public recordHaps(window: HapCacheWindow, rawHaps: readonly any[], bufferGeneration: number): void {
-    const batch: Hap[] = rawHaps.map((raw) => ({
-      start: window.from,
-      end: window.to,
-      value: raw,
-      bufferGeneration,
-    }));
+    const batch: Hap[] = rawHaps.map((raw) => {
+      const { start, end } = spanFromRaw(raw, window);
+      return {
+        start,
+        end,
+        value: valueFromRaw(raw),
+        bufferGeneration,
+      };
+    });
 
     this.haps.push(...batch);
 

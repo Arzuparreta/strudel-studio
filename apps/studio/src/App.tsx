@@ -26,7 +26,7 @@ import {
 } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { GraphCanvas } from "@strudel-studio/ui-components";
-import { HapList } from "@strudel-studio/pattern-inspector";
+import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
 
@@ -379,6 +379,18 @@ export default function App() {
           (time window [0, 1]).
         </p>
         <HapList haps={haps} />
+        <div style={{ marginTop: "1rem" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+            Pattern timeline (v0.9)
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
+            Events over time. Generate &amp; Play to see the pattern evolve.
+          </p>
+          <HapTimeline
+            haps={haps}
+            timeWindow={{ from: 0, to: 1 }}
+          />
+        </div>
         <div style={{ marginTop: "0.75rem" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
             Lane transform summary

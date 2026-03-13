@@ -40,5 +40,23 @@ describe("HapCache", () => {
     cache.clear();
     expect(cache.getHaps({ from: 0, to: 1 })).toHaveLength(0);
   });
+
+  it("uses per-event part timespan when raw hap has part array (v0.9 timeline)", () => {
+    const cache = new HapCache(16);
+    cache.recordHaps(
+      { from: 0, to: 1 },
+      [
+        { value: { note: "bd" }, part: [0, 0.25] },
+        { value: { note: "sd" }, part: [0.25, 0.5] },
+        { value: { note: "bd" }, part: [0.5, 0.75] },
+      ],
+      1,
+    );
+    const haps = cache.getHaps({ from: 0, to: 1 });
+    expect(haps).toHaveLength(3);
+    expect(haps[0]).toMatchObject({ start: 0, end: 0.25, value: { note: "bd" } });
+    expect(haps[1]).toMatchObject({ start: 0.25, end: 0.5, value: { note: "sd" } });
+    expect(haps[2]).toMatchObject({ start: 0.5, end: 0.75, value: { note: "bd" } });
+  });
 });
 

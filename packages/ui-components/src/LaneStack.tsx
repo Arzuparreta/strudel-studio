@@ -344,6 +344,33 @@ export function LaneStack({
                 {chain.methods.map((m, idx) => (
                   <div
                     key={m.id}
+                    draggable={!!onReorderTransforms}
+                    onDragStart={(event) => {
+                      if (!onReorderTransforms) return;
+                      event.dataTransfer.setData("text/plain", String(idx));
+                      event.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragOver={(event) => {
+                      if (!onReorderTransforms) return;
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = "move";
+                    }}
+                    onDrop={(event) => {
+                      if (!onReorderTransforms) return;
+                      event.preventDefault();
+                      const raw = event.dataTransfer.getData("text/plain");
+                      const fromIndex = Number.parseInt(raw, 10);
+                      if (!Number.isFinite(fromIndex)) {
+                        return;
+                      }
+                      if (fromIndex === idx) {
+                        return;
+                      }
+                      const ids = chain.methods.map((mm) => mm.id);
+                      const [moved] = ids.splice(fromIndex, 1);
+                      ids.splice(idx, 0, moved!);
+                      onReorderTransforms(lane.id, ids);
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -367,10 +394,7 @@ export function LaneStack({
                             .split(",")
                             .map((p) => p.trim())
                             .filter((p) => p.length > 0);
-                          const nextArgs = parts.map((p) =>
-                            /^-?\d+(\.\d+)?$/.test(p) ? Number.parseFloat(p) : p,
-                          );
-                          onChangeTransformArgs(lane.id, m.id, nextArgs);
+                          onChangeTransformArgs(lane.id, m.id, parts);
                         }}
                         style={{
                           fontFamily: "inherit",

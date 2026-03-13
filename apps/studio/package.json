@@ -11,9 +11,11 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@strudel-studio/strudel-bridge": "workspace:*",
     "@strudel-studio/code-generator": "workspace:*",
+    "@strudel-studio/pattern-graph": "workspace:*",
+    "@strudel-studio/strudel-bridge": "workspace:*",
     "@strudel-studio/strudel-parser": "workspace:*",
+    "@strudel-studio/ui-components": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

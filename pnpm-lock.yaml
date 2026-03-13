@@ -29,12 +29,18 @@ importers:
       '@strudel-studio/code-generator':
         specifier: workspace:*
         version: link:../../packages/code-generator
+      '@strudel-studio/pattern-graph':
+        specifier: workspace:*
+        version: link:../../packages/pattern-graph
       '@strudel-studio/strudel-bridge':
         specifier: workspace:*
         version: link:../../packages/strudel-bridge
       '@strudel-studio/strudel-parser':
         specifier: workspace:*
         version: link:../../packages/strudel-parser
+      '@strudel-studio/ui-components':
+        specifier: workspace:*
+        version: link:../../packages/ui-components
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -177,6 +183,25 @@ importers:
         specifier: ^8.14.0
         version: 8.16.0
     devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.6
+        version: 2.1.9(jsdom@28.1.0)
+
+  packages/ui-components:
+    dependencies:
+      '@strudel-studio/pattern-graph':
+        specifier: workspace:*
+        version: link:../pattern-graph
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.1
+        version: 19.2.14
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

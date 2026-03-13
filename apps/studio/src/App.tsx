@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { astVersion, EvalScheduler, hushAll } from "@strudel-studio/strudel-bridge";
-import { generate } from "@strudel-studio/code-generator";
+import { generate, generateDocument } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 import type { ParseResult } from "@strudel-studio/strudel-parser";
+import { graphToAst } from "@strudel-studio/pattern-graph";
+import { LaneStack } from "@strudel-studio/ui-components";
+import type { PatternGraph } from "@strudel-studio/pattern-graph";
 
 const demoAst: TransformChain = {
   id: "demo-chain",
@@ -23,6 +26,44 @@ const demoAst: TransformChain = {
       args: [2],
     },
   ],
+};
+
+/** Demo multi-track graph (parallel root, two lanes) for Task 3.11. */
+const demoGraph: PatternGraph = {
+  graphVersion: 2,
+  astVersion: 1,
+  root: "root_parallel",
+  nodes: [
+    {
+      id: "root_parallel",
+      type: "parallel",
+      order: ["lane_drums", "lane_bass"],
+    },
+    {
+      id: "lane_drums",
+      type: "lane",
+      cycleHint: 2,
+      head: "n_drums",
+    },
+    {
+      id: "n_drums",
+      type: "transformChain",
+      base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+      methods: [{ id: "m1", name: "bank", args: ["tr909"] }],
+    },
+    {
+      id: "lane_bass",
+      type: "lane",
+      head: "n_bass",
+    },
+    {
+      id: "n_bass",
+      type: "transformChain",
+      base: { kind: "s", miniSerialization: "eb2 buddy" },
+      methods: [],
+    },
+  ],
+  edges: [],
 };
 
 export default function App() {
@@ -157,6 +198,26 @@ export default function App() {
         <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
           Parse status: {parseInfo}
         </p>
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Multi-track graph</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Stacked lanes from pattern graph (parallel root). Compile to code to
+          insert the generated Strudel into the editor above.
+        </p>
+        <LaneStack graph={demoGraph} />
+        <div style={{ marginTop: "0.75rem" }}>
+          <button
+            type="button"
+            onClick={() => {
+              const doc = graphToAst(demoGraph);
+              setSource(generateDocument(doc));
+            }}
+          >
+            Compile graph to code
+          </button>
+        </div>
       </section>
     </main>
   );

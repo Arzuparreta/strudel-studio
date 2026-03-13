@@ -12,6 +12,8 @@ export {
   type Call,
   type ChainMethods,
   type TransformChain,
+  type CompositePattern,
+  type PatternDoc,
 } from "./types.js";
 
 export {

@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`graphToSource golden > multi-track-parallel.json → snapshot 1`] = `"stack(s("bd ~ sd ~").bank("tr909").slow(2), s("eb2 buddy"))"`;
+
+exports[`graphToSource golden > multi-track-serial.json → snapshot 1`] = `"cat(s("bd ~").slow(2), s("sd ~"))"`;

@@ -19,3 +19,5 @@ export type {
   OpaqueGraphNode,
 } from "./schema.js";
 
+export { graphToAst } from "./compile/graphToAst.js";
+

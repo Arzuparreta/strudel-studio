@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generate, escapeString, formatLiteral } from "./generate.js";
-import type { TransformChain } from "@strudel-studio/pattern-ast";
+import { generate, generateDocument, escapeString, formatLiteral } from "./generate.js";
+import type { TransformChain, PatternDoc } from "@strudel-studio/pattern-ast";
 
 describe("generate", () => {
   it("emits base s() with no methods", () => {
@@ -50,6 +50,58 @@ describe("escapeString", () => {
     expect(escapeString('"')).toBe('\\"');
     expect(escapeString("\\")).toBe("\\\\");
     expect(escapeString('\\"')).toBe('\\\\\\"');
+  });
+});
+
+describe("generateDocument", () => {
+  it("emits single chain unchanged", () => {
+    const doc: PatternDoc = {
+      id: "root",
+      base: { kind: "s", mini: "[bd ~]" },
+      methods: [],
+    };
+    expect(generateDocument(doc)).toBe('s("[bd ~]")');
+  });
+
+  it("emits stack(a, b) for parallel composition", () => {
+    const doc: PatternDoc = {
+      call: "stack",
+      children: [
+        { id: "a", base: { kind: "s", mini: "bd ~" }, methods: [] },
+        { id: "b", base: { kind: "s", mini: "sd ~" }, methods: [] },
+      ],
+    };
+    expect(generateDocument(doc)).toBe('stack(s("bd ~"), s("sd ~"))');
+  });
+
+  it("emits cat(a, b) for serial composition", () => {
+    const doc: PatternDoc = {
+      call: "cat",
+      children: [
+        { id: "a", base: { kind: "s", mini: "bd ~" }, methods: [] },
+        { id: "b", base: { kind: "s", mini: "sd ~" }, methods: [] },
+      ],
+    };
+    expect(generateDocument(doc)).toBe('cat(s("bd ~"), s("sd ~"))');
+  });
+
+  it("emits nested stack(cat(...), ...)", () => {
+    const doc: PatternDoc = {
+      call: "stack",
+      children: [
+        {
+          call: "cat",
+          children: [
+            { id: "a", base: { kind: "s", mini: "bd" }, methods: [] },
+            { id: "b", base: { kind: "s", mini: "sd" }, methods: [] },
+          ],
+        },
+        { id: "c", base: { kind: "s", mini: "hh" }, methods: [] },
+      ],
+    };
+    expect(generateDocument(doc)).toBe(
+      'stack(cat(s("bd"), s("sd")), s("hh"))',
+    );
   });
 });
 

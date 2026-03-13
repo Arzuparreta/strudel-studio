@@ -48,3 +48,16 @@ export interface TransformChain {
   base: BaseCall;
   methods: ChainMethods;
 }
+
+/**
+ * Composite pattern: stack (parallel) or cat (serial) of child patterns.
+ * Used when the graph root is parallel/serial; children are in deterministic order.
+ * @see docs/architecture.md §5
+ */
+export interface CompositePattern {
+  call: "stack" | "cat";
+  children: PatternDoc[];
+}
+
+/** Root-level pattern: either a single chain or a composition (stack/cat). */
+export type PatternDoc = TransformChain | CompositePattern;

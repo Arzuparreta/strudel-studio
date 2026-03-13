@@ -67,7 +67,7 @@ describe("graphToAst", () => {
     expect(slow?.args).toEqual([2]);
   });
 
-  it("throws for unsupported root node types", () => {
+  it("compiles a parallel root to stack(child1, child2) with deterministic order", () => {
     const graph: PatternGraph = {
       graphVersion: 2,
       astVersion: 1,
@@ -76,14 +76,96 @@ describe("graphToAst", () => {
         {
           id: "root_parallel",
           type: "parallel",
-          order: [],
-        } as any,
+          order: ["lane_drums", "lane_bass"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "n_drums",
+        },
+        {
+          id: "n_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [],
+        },
+        {
+          id: "lane_bass",
+          type: "lane",
+          head: "n_bass",
+        },
+        {
+          id: "n_bass",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "eb2 buddy" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const doc = graphToAst(graph);
+    expect(doc).toHaveProperty("call", "stack");
+    expect(doc).toHaveProperty("children");
+    const children = (doc as { call: string; children: unknown[] }).children;
+    expect(children).toHaveLength(2);
+    expect(children[0]).toHaveProperty("base");
+    expect((children[0] as { base: { mini: string } }).base.mini).toBe("bd ~ sd ~");
+    expect((children[1] as { base: { mini: string } }).base.mini).toBe("eb2 buddy");
+  });
+
+  it("compiles a serial root to cat(child1, child2)", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_serial",
+      nodes: [
+        {
+          id: "root_serial",
+          type: "serial",
+          order: ["chain_a", "chain_b"],
+        },
+        {
+          id: "chain_a",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~" },
+          methods: [],
+        },
+        {
+          id: "chain_b",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "sd ~" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const doc = graphToAst(graph);
+    expect(doc).toHaveProperty("call", "cat");
+    const children = (doc as { call: string; children: unknown[] }).children;
+    expect(children).toHaveLength(2);
+    expect((children[0] as { base: { mini: string } }).base.mini).toBe("bd ~");
+    expect((children[1] as { base: { mini: string } }).base.mini).toBe("sd ~");
+  });
+
+  it("throws for unsupported root node types (e.g. opaque)", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_opaque",
+      nodes: [
+        {
+          id: "root_opaque",
+          type: "opaque",
+          rawCode: "something()",
+        },
       ],
       edges: [],
     };
 
     expect(() => graphToAst(graph)).toThrow(
-      "graphToAst: unsupported root node type: parallel",
+      "graphToAst: unsupported node type: opaque",
     );
   });
 });

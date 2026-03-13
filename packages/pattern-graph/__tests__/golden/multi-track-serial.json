@@ -1,0 +1,25 @@
+{
+  "graphVersion": 2,
+  "astVersion": 1,
+  "root": "root_serial",
+  "nodes": [
+    {
+      "id": "root_serial",
+      "type": "serial",
+      "order": ["chain_a", "chain_b"]
+    },
+    {
+      "id": "chain_a",
+      "type": "transformChain",
+      "base": { "kind": "s", "miniSerialization": "bd ~" },
+      "methods": [{ "id": "m1", "name": "slow", "args": [2] }]
+    },
+    {
+      "id": "chain_b",
+      "type": "transformChain",
+      "base": { "kind": "s", "miniSerialization": "sd ~" },
+      "methods": []
+    }
+  ],
+  "edges": []
+}

@@ -1,0 +1,36 @@
+{
+  "graphVersion": 2,
+  "astVersion": 1,
+  "root": "root_parallel",
+  "nodes": [
+    {
+      "id": "root_parallel",
+      "type": "parallel",
+      "order": ["lane_drums", "lane_bass"]
+    },
+    {
+      "id": "lane_drums",
+      "type": "lane",
+      "cycleHint": 2,
+      "head": "n_drums"
+    },
+    {
+      "id": "n_drums",
+      "type": "transformChain",
+      "base": { "kind": "s", "miniSerialization": "bd ~ sd ~" },
+      "methods": [{ "id": "m1", "name": "bank", "args": ["tr909"] }]
+    },
+    {
+      "id": "lane_bass",
+      "type": "lane",
+      "head": "n_bass"
+    },
+    {
+      "id": "n_bass",
+      "type": "transformChain",
+      "base": { "kind": "s", "miniSerialization": "eb2 buddy" },
+      "methods": []
+    }
+  ],
+  "edges": []
+}

@@ -3,8 +3,17 @@
  * @see docs/implementation-roadmap.md Task 1.4
  */
 
-import type { Literal, TransformChain } from "@strudel-studio/pattern-ast";
+import type {
+  Literal,
+  TransformChain,
+  CompositePattern,
+  PatternDoc,
+} from "@strudel-studio/pattern-ast";
 import { astVersion, canonicalIndexOf } from "@strudel-studio/pattern-ast";
+
+function isComposite(doc: PatternDoc): doc is CompositePattern {
+  return "call" in doc && "children" in doc;
+}
 
 /** Escape a string for double-quoted JS/Strudel output: backslash and quote. */
 export function escapeString(s: string): string {
@@ -52,4 +61,17 @@ export function generate(ast: TransformChain): string {
       `.${call.name}(${call.args.map(formatLiteral).join(", ")})`
   );
   return head + parts.join("");
+}
+
+/**
+ * Generate Strudel source from a PatternDoc (single chain or stack/cat composition).
+ * Deterministic: child order follows the AST order.
+ * @see docs/implementation-roadmap.md Task 3.2 (multi-track)
+ */
+export function generateDocument(doc: PatternDoc): string {
+  if (isComposite(doc)) {
+    const args = doc.children.map((child) => generateDocument(child));
+    return `${doc.call}(${args.join(", ")})`;
+  }
+  return generate(doc);
 }

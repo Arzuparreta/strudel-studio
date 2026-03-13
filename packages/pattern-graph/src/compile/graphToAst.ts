@@ -3,12 +3,15 @@ import {
   canonicalIndexOf,
   type Literal,
   type TransformChain,
+  type PatternDoc,
+  type CompositePattern,
 } from "@strudel-studio/pattern-ast";
 import type {
   PatternGraph,
   GraphNode,
   TransformChainNode,
   LaneNode,
+  CompositionNode,
 } from "../schema.js";
 
 function findNode(graph: PatternGraph, id: string): GraphNode {
@@ -82,32 +85,59 @@ function compileTransformChainNode(
   };
 }
 
-/**
- * Compile a PatternGraph into a single-spine TransformChain AST.
- *
- * Supported roots (v0.3 initial scope):
- * - transformChain: root is a single spine.
- * - lane: root lane whose `head` points to a transformChain node.
- *
- * Other root kinds (parallel/serial/opaque) are rejected for now and can be
- * added when multi-track graph → AST rules are implemented.
- */
-export function graphToAst(graph: PatternGraph): TransformChain {
-  const rootNode = findNode(graph, graph.root);
+/** Get ordered child ids for a composition node (from order array or edges, then sort by id). */
+function getCompositionChildIds(graph: PatternGraph, node: CompositionNode): string[] {
+  if (node.order && node.order.length > 0) {
+    return node.order;
+  }
+  const role = node.type === "parallel" ? "parallel" : "serial";
+  const fromEdges = graph.edges
+    .filter((e) => e.to === node.id && e.role === role)
+    .map((e) => e.from);
+  return fromEdges.slice().sort((a, b) => a.localeCompare(b));
+}
 
-  if (rootNode.type === "transformChain") {
-    return compileTransformChainNode(rootNode);
+/**
+ * Compile a single graph node to a PatternDoc (chain or stack/cat composition).
+ */
+function compileNode(graph: PatternGraph, nodeId: string): PatternDoc {
+  const node = findNode(graph, nodeId);
+
+  if (node.type === "transformChain") {
+    return compileTransformChainNode(node);
   }
 
-  if (rootNode.type === "lane") {
-    const lane = toLaneNode(rootNode);
+  if (node.type === "lane") {
+    const lane = toLaneNode(node);
     const headNode = findNode(graph, lane.head);
     const chain = toTransformChainNode(headNode);
     return compileTransformChainNode(chain, lane);
   }
 
+  if (node.type === "parallel" || node.type === "serial") {
+    const comp = node as CompositionNode;
+    const childIds = getCompositionChildIds(graph, comp);
+    const children: PatternDoc[] = childIds.map((id) => compileNode(graph, id));
+    const composite: CompositePattern = {
+      call: comp.type === "parallel" ? "stack" : "cat",
+      children,
+    };
+    return composite;
+  }
+
   throw new Error(
-    `graphToAst: unsupported root node type: ${rootNode.type}`,
+    `graphToAst: unsupported node type: ${node.type}`,
   );
+}
+
+/**
+ * Compile a PatternGraph into a PatternDoc (single chain or stack/cat composition).
+ *
+ * - transformChain / lane roots → single TransformChain.
+ * - parallel root → stack(child1, child2, …); serial root → cat(child1, child2, …).
+ * Child order is from node.order when present, else from edges sorted by id.
+ */
+export function graphToAst(graph: PatternGraph): PatternDoc {
+  return compileNode(graph, graph.root);
 }
 

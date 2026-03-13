@@ -15,4 +15,5 @@
 
 export type { ParseResult } from "./parse.js";
 export { parseToAstOrOpaque } from "./parse.js";
+export { rebindTransformChain } from "./rebind.js";
 

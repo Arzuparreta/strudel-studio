@@ -104,45 +104,65 @@ export function HapTimeline({
           return (
             <div
               key={key}
-              data-testid={`timeline-row-${key}`}
-              style={{
-                position: "relative",
-                height: rowHeight,
-                background: "linear-gradient(to right, #f5f5f5 0%, #eee 100%)",
-                borderRadius: "4px",
-                border: "1px solid #ddd",
-                overflow: "hidden",
-              }}
+              style={{ display: "flex", alignItems: "center", gap: 4 }}
             >
-              {laneHaps.map((hap, index) => {
-                const left = ((hap.start - from) / span) * 100;
-                const width = Math.max(((hap.end - hap.start) / span) * 100, 2);
-                return (
-                  <div
-                    key={`${key}-${hap.bufferGeneration}-${hap.start}-${hap.end}-${index}`}
-                    title={`[${hap.start.toFixed(3)} – ${hap.end.toFixed(3)}] ${JSON.stringify(hap.value)}`}
-                    style={{
-                      position: "absolute",
-                      left: `${left}%`,
-                      width: `${width}%`,
-                      top: 4,
-                      height: rowHeight - 8,
-                      backgroundColor: "rgba(80, 120, 200, 0.35)",
-                      border: "1px solid rgba(60, 90, 160, 0.6)",
-                      borderRadius: "3px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      fontSize: "0.75rem",
-                      fontWeight: 500,
-                      color: "#222",
-                    }}
-                  >
-                    {labelForValue(hap.value)}
-                  </div>
-                );
-              })}
+              <div
+                style={{
+                  width: 48,
+                  textAlign: "right",
+                  fontSize: "0.7rem",
+                  color: "#777",
+                  flexShrink: 0,
+                }}
+              >
+                {key}
+              </div>
+              <div
+                data-testid={`timeline-row-${key}`}
+                style={{
+                  position: "relative",
+                  height: rowHeight,
+                  flex: 1,
+                  background:
+                    "linear-gradient(to right, #f5f5f5 0%, #eee 100%)",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  overflow: "hidden",
+                }}
+              >
+                {laneHaps.map((hap, index) => {
+                  const left = ((hap.start - from) / span) * 100;
+                  const width = Math.max(
+                    ((hap.end - hap.start) / span) * 100,
+                    2,
+                  );
+                  return (
+                    <div
+                      key={`${key}-${hap.bufferGeneration}-${hap.start}-${hap.end}-${index}`}
+                      title={`[${hap.start.toFixed(3)} – ${hap.end.toFixed(3)}] ${JSON.stringify(hap.value)}`}
+                      style={{
+                        position: "absolute",
+                        left: `${left}%`,
+                        width: `${width}%`,
+                        top: 4,
+                        height: rowHeight - 8,
+                        backgroundColor: "rgba(80, 120, 200, 0.35)",
+                        border: "1px solid rgba(60, 90, 160, 0.6)",
+                        borderRadius: "3px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                        color: "#222",
+                      }}
+                    >
+                      {labelForValue(hap.value)}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })}

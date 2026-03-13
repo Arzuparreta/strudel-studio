@@ -5,7 +5,14 @@ import type {
   TransformChainNode,
   LaneNode,
   CompositionNode,
+  PluginNode,
 } from "../schema.js";
+
+/** Options for graph → AST compilation (v1.0 plugin node support). */
+export interface GraphToAstOptions {
+  /** When present, plugin nodes are compiled via this callback. */
+  compilePluginNode?: (node: PluginNode) => PatternDoc;
+}
 
 function findNode(graph: PatternGraph, id: string): GraphNode {
   const node = graph.nodes.find((n) => n.id === id);
@@ -88,7 +95,11 @@ function getCompositionChildIds(graph: PatternGraph, node: CompositionNode): str
 /**
  * Compile a single graph node to a PatternDoc (chain or stack/cat composition).
  */
-function compileNode(graph: PatternGraph, nodeId: string): PatternDoc {
+function compileNode(
+  graph: PatternGraph,
+  nodeId: string,
+  options?: GraphToAstOptions,
+): PatternDoc {
   const node = findNode(graph, nodeId);
 
   if (node.type === "transformChain") {
@@ -105,12 +116,23 @@ function compileNode(graph: PatternGraph, nodeId: string): PatternDoc {
   if (node.type === "parallel" || node.type === "serial") {
     const comp = node as CompositionNode;
     const childIds = getCompositionChildIds(graph, comp);
-    const children: PatternDoc[] = childIds.map((id) => compileNode(graph, id));
+    const children: PatternDoc[] = childIds.map((id) =>
+      compileNode(graph, id, options),
+    );
     const composite: CompositePattern = {
       call: comp.type === "parallel" ? "stack" : "cat",
       children,
     };
     return composite;
+  }
+
+  if (node.type === "plugin") {
+    if (options?.compilePluginNode) {
+      return options.compilePluginNode(node);
+    }
+    throw new Error(
+      `graphToAst: plugin node ${node.pluginId}/${node.nodeKind} has no registered compiler`,
+    );
   }
 
   throw new Error(
@@ -123,9 +145,13 @@ function compileNode(graph: PatternGraph, nodeId: string): PatternDoc {
  *
  * - transformChain / lane roots → single TransformChain.
  * - parallel root → stack(child1, child2, …); serial root → cat(child1, child2, …).
+ * - plugin nodes → compiled via options.compilePluginNode when provided (v1.0).
  * Child order is from node.order when present, else from edges sorted by id.
  */
-export function graphToAst(graph: PatternGraph): PatternDoc {
-  return compileNode(graph, graph.root);
+export function graphToAst(
+  graph: PatternGraph,
+  options?: GraphToAstOptions,
+): PatternDoc {
+  return compileNode(graph, graph.root, options);
 }
 

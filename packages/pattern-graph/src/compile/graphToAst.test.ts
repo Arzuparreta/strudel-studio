@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { PatternGraph } from "../schema.js";
 import { graphToAst } from "./graphToAst.js";
+import type { PluginNode } from "../schema.js";
 
 describe("graphToAst", () => {
   it("compiles a transformChain root graph to a TransformChain AST", () => {
@@ -167,6 +168,63 @@ describe("graphToAst", () => {
 
     expect(() => graphToAst(graph)).toThrow(
       "graphToAst: unsupported node type: opaque",
+    );
+  });
+
+  it("compiles plugin node when compilePluginNode option is provided (v1.0)", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "plugin_1",
+      nodes: [
+        {
+          id: "plugin_1",
+          type: "plugin",
+          pluginId: "euclidean",
+          nodeKind: "euclideanPattern",
+          payload: { hits: 3, steps: 4 },
+        },
+      ],
+      edges: [],
+    };
+
+    const compilePluginNode = (node: PluginNode) => {
+      expect(node.type).toBe("plugin");
+      expect(node.pluginId).toBe("euclidean");
+      expect(node.nodeKind).toBe("euclideanPattern");
+      return {
+        id: node.id,
+        base: { kind: "s" as const, mini: "[bd*3 bd]" },
+        methods: [],
+      };
+    };
+
+    const doc = graphToAst(graph, { compilePluginNode });
+    expect(doc).not.toHaveProperty("call");
+    expect((doc as { base: { kind: string; mini: string } }).base.kind).toBe("s");
+    expect((doc as { base: { kind: string; mini: string } }).base.mini).toBe(
+      "[bd*3 bd]",
+    );
+  });
+
+  it("throws when plugin node has no registered compiler", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "plugin_1",
+      nodes: [
+        {
+          id: "plugin_1",
+          type: "plugin",
+          pluginId: "unknown",
+          nodeKind: "custom",
+        },
+      ],
+      edges: [],
+    };
+
+    expect(() => graphToAst(graph)).toThrow(
+      "graphToAst: plugin node unknown/custom has no registered compiler",
     );
   });
 });

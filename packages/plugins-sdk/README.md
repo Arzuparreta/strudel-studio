@@ -16,6 +16,8 @@ Use these exports when building a plugin:
 | `getSupportedAstVersion()` | Current supported AST version (for validation). |
 | `validatePatternGraph(graph)` | Validate a graph before applying (e.g. after plugin transform). |
 | `withBudgetAsync(fn, budgetMs?)` | Run async plugin work under a time budget. |
+| `registerPluginNodeCompiler(pluginId, nodeKind, compile)` | Register a compiler for plugin graph nodes (custom node types). |
+| `createPluginNodeCompiler()` | Build the callback to pass into `graphToAst(graph, { compilePluginNode })`. |
 
 The editor uses these internally; plugins typically only call the registration and validation APIs above.
 

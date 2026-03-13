@@ -25,6 +25,7 @@ import {
   coerceTransformArgs,
   listPluginIds,
   getPlugin,
+  createPluginNodeCompiler,
 } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { GraphCanvas } from "@strudel-studio/ui-components";
@@ -200,7 +201,9 @@ export default function App() {
   function updateSourceFromGraph(nextGraph: PatternGraph) {
     try {
       validatePatternGraph(nextGraph);
-      const doc = graphToAst(nextGraph);
+      const doc = graphToAst(nextGraph, {
+        compilePluginNode: createPluginNodeCompiler(),
+      });
       const code = generateDocument(doc);
       setGraph(nextGraph);
       setSource(code);

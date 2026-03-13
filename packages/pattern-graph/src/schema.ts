@@ -56,11 +56,25 @@ export const opaqueNodeSchema = z.object({
   outputType: z.enum(["Pattern", "unknown"]).default("unknown"),
 });
 
+/**
+ * Plugin-defined node (v1.0). Compiled via a plugin-registered compiler hook.
+ * @see docs/project-roadmap.md v1.0 — Plugin System
+ */
+export const pluginNodeSchema = z.object({
+  id: z.string(),
+  type: z.literal("plugin"),
+  pluginId: z.string(),
+  nodeKind: z.string(),
+  /** Plugin-defined payload; shape is defined by the plugin. */
+  payload: z.unknown().optional(),
+});
+
 export const graphNodeSchema = z.discriminatedUnion("type", [
   laneNodeSchema,
   transformChainNodeSchema,
   compositionNodeSchema,
   opaqueNodeSchema,
+  pluginNodeSchema,
 ]);
 
 export const graphEdgeSchema = z.object({
@@ -82,6 +96,7 @@ export type LaneNode = z.infer<typeof laneNodeSchema>;
 export type TransformChainNode = z.infer<typeof transformChainNodeSchema>;
 export type CompositionNode = z.infer<typeof compositionNodeSchema>;
 export type OpaqueGraphNode = z.infer<typeof opaqueNodeSchema>;
+export type PluginNode = z.infer<typeof pluginNodeSchema>;
 export type GraphNode = z.infer<typeof graphNodeSchema>;
 export type GraphEdge = z.infer<typeof graphEdgeSchema>;
 export type PatternGraph = z.infer<typeof patternGraphSchema>;

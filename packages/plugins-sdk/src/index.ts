@@ -19,3 +19,7 @@ export {
   type TransformArgType,
 } from "./transformRegistry.js";
 export { parseTransformArgsString } from "./parseTransformArgs.js";
+export {
+  registerPluginNodeCompiler,
+  createPluginNodeCompiler,
+} from "./pluginNodeCompiler.js";

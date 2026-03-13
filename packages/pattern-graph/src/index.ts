@@ -6,6 +6,7 @@ export {
   transformChainNodeSchema,
   compositionNodeSchema,
   opaqueNodeSchema,
+  pluginNodeSchema,
   parsePatternGraph,
 } from "./schema.js";
 
@@ -17,9 +18,11 @@ export type {
   TransformChainNode,
   CompositionNode,
   OpaqueGraphNode,
+  PluginNode,
 } from "./schema.js";
 
 export { graphToAst } from "./compile/graphToAst.js";
+export type { GraphToAstOptions } from "./compile/graphToAst.js";
 export { astToGraph } from "./compile/astToGraph.js";
 
 export {

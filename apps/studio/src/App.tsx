@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { astVersion, EvalScheduler, hushAll } from "@strudel-studio/strudel-bridge";
+import { astVersion, EvalScheduler, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
 import { generate, generateDocument } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
@@ -18,6 +18,7 @@ import {
 } from "@strudel-studio/pattern-graph";
 import { TRANSFORM_REGISTRY, getTransformSpec } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
+import { HapList } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
 
@@ -87,6 +88,7 @@ export default function App() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [selectedTransformName, setSelectedTransformName] =
     useState<string>("slow");
+  const [haps, setHaps] = useState<import("@strudel-studio/strudel-bridge").Hap[]>([]);
 
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
@@ -101,6 +103,8 @@ export default function App() {
       }),
     [],
   );
+
+  const hapCache = useMemo(() => new HapCache(), []);
 
   // Debounced parse whenever the source changes.
   useEffect(() => {
@@ -189,6 +193,23 @@ export default function App() {
       play?: () => void;
     };
 
+    try {
+      const queryable = result.pattern as typeof result.pattern & {
+        queryArc?: (from: number, to: number) => unknown[];
+      };
+      if (typeof queryable.queryArc === "function") {
+        const window = { from: 0, to: 1 };
+        const rawHaps = queryable.queryArc(window.from, window.to);
+        hapCache.clear();
+        hapCache.recordHaps(window, rawHaps, 0);
+        setHaps(hapCache.getHaps(window));
+      } else {
+        setHaps([]);
+      }
+    } catch {
+      setHaps([]);
+    }
+
     if (typeof playable.play === "function") {
       playable.play();
       setStatus("playing pattern");
@@ -223,6 +244,15 @@ export default function App() {
         <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
           Parse status: {parseInfo}
         </p>
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Pattern inspector</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Read-only view of recent haps from the evaluated pattern
+          (time window [0, 1]).
+        </p>
+        <HapList haps={haps} />
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>

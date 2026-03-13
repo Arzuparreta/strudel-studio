@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { astVersion, EvalScheduler, hushAll } from "@strudel-studio/strudel-bridge";
 import { generate } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
+import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 
 const demoAst: TransformChain = {
   id: "demo-chain",
@@ -26,6 +27,11 @@ const demoAst: TransformChain = {
 export default function App() {
   const [source, setSource] = useState<string>(() => generate(demoAst));
   const [status, setStatus] = useState<string>("idle");
+  const [parseInfo, setParseInfo] = useState<string>("not parsed yet");
+
+  // Debounced parse state: last successful parse result.
+  const [hasSubsetAst, setHasSubsetAst] = useState(false);
+  const [hasOpaques, setHasOpaques] = useState(false);
 
   const scheduler = useMemo(
     () =>
@@ -35,6 +41,42 @@ export default function App() {
       }),
     [],
   );
+
+  // Debounced parse whenever the source changes.
+  useEffect(() => {
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      try {
+        const result = parseToAstOrOpaque(source);
+        if (cancelled) {
+          return;
+        }
+        const nextHasAst = result.ast != null;
+        const nextHasOpaques = result.opaques.length > 0;
+        setHasSubsetAst(nextHasAst);
+        setHasOpaques(nextHasOpaques);
+
+        if (nextHasAst && !nextHasOpaques) {
+          setParseInfo("parsed: supported subset AST");
+        } else if (nextHasAst && nextHasOpaques) {
+          setParseInfo("parsed: AST with opaque regions");
+        } else if (!nextHasAst && nextHasOpaques) {
+          setParseInfo("parsed: opaque-only (unsupported or complex code)");
+        } else {
+          setParseInfo("parsed: empty document");
+        }
+      } catch {
+        if (!cancelled) {
+          setParseInfo("parse error — using last good AST/opaques");
+        }
+      }
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [source]);
 
   useEffect(() => {
     setSource(generate(demoAst));
@@ -98,6 +140,9 @@ export default function App() {
           </button>
           <span>{status}</span>
         </div>
+        <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
+          Parse status: {parseInfo}
+        </p>
       </section>
     </main>
   );

@@ -35,6 +35,12 @@ importers:
       '@strudel-studio/pattern-graph':
         specifier: workspace:*
         version: link:../../packages/pattern-graph
+      '@strudel-studio/pattern-inspector':
+        specifier: workspace:*
+        version: link:../../packages/pattern-inspector
+      '@strudel-studio/plugins-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugins-sdk
       '@strudel-studio/strudel-bridge':
         specifier: workspace:*
         version: link:../../packages/strudel-bridge

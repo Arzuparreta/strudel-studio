@@ -7,5 +7,5 @@ export { astVersion } from "@strudel-studio/code-generator";
 export { evaluateToPattern, hushAll } from "./evaluate";
 export { EvalScheduler } from "./evalScheduler.js";
 export { DualPatternBuffers, type PatternBuffer } from "./buffers.js";
-export { HapCache } from "./hapCache.js";
+export { HapCache, type Hap } from "./hapCache.js";
 

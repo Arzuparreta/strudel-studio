@@ -17,6 +17,8 @@
     "@strudel-studio/strudel-bridge": "workspace:*",
     "@strudel-studio/strudel-parser": "workspace:*",
     "@strudel-studio/ui-components": "workspace:*",
+    "@strudel-studio/plugins-sdk": "workspace:*",
+    "@strudel-studio/pattern-inspector": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

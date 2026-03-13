@@ -1,5 +1,5 @@
 import type { Hap } from "@strudel-studio/strudel-bridge";
-import React from "react";
+import type { JSX } from "react";
 
 export interface HapListProps {
   haps: Hap[];

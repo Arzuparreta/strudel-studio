@@ -5,3 +5,4 @@
 
 export { astVersion } from "@strudel-studio/pattern-ast";
 export { generate, escapeString, formatLiteral } from "./generate.js";
+export { emitDocument, type EmitDocumentOptions } from "./document.js";

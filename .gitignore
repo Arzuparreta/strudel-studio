@@ -13,17 +13,15 @@ coverage
 
 .pnpm-store
 
-# Vite / Vitest caches
 **/.vite
 **/.vitest
 
-# IDE / editor
 .DS_Store
 *.log
 .vscode
 .idea
 
-# Build artifacts that shouldn’t ship
+
 apps/studio/dist
 apps/studio/node_modules
 packages/*/node_modules

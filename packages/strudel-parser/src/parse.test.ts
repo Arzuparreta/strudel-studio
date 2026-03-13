@@ -26,7 +26,7 @@ describe("parseToAstOrOpaque subset parsing", () => {
     expect(result.ast?.methods[1]?.args).toEqual([2]);
   });
 
-  it("falls back to a single opaque node for unsupported shapes", () => {
+  it("falls back to a single opaque node for unsupported shapes, bounded to the expression", () => {
     const source = 'unknownFunc("[bd ~]")';
 
     const result = parseToAstOrOpaque(source);
@@ -36,6 +36,7 @@ describe("parseToAstOrOpaque subset parsing", () => {
 
     const [opaque] = result.opaques;
     expect(opaque.rawCode).toBe(source);
+    // For now the opaque range covers the full document expression.
     expect(opaque.sourceRange).toEqual({ start: 0, end: source.length });
     expect(opaque.emitMode).toBe("statementBlock");
   });

@@ -6,6 +6,7 @@ import type {
   TransformChain,
 } from "@strudel-studio/pattern-ast";
 import { isKnownMethod } from "./whitelist.js";
+import { makeOpaqueFromExpression } from "./opaqueExpand.js";
 
 /**
  * Result of parsing a Strudel source document.
@@ -54,12 +55,21 @@ export function parseToAstOrOpaque(source: string): ParseResult {
     return makeWholeDocumentOpaque(source);
   }
 
-  const expr = body[0].expression;
+  const stmt = body[0];
+  const expr = stmt.expression;
 
   // Extract base + methods from supported expression shapes.
   const chain = extractTransformChain(expr, source);
   if (!chain) {
-    return makeWholeDocumentOpaque(source);
+    const opaque = makeOpaqueFromExpression(
+      "opaque_expression",
+      source,
+      stmt,
+    );
+    return {
+      ast: null,
+      opaques: [opaque],
+    };
   }
 
   return {

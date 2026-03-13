@@ -7,6 +7,7 @@ import {
   setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
+  updateLaneTransformArgs,
   removeTransformFromLane,
   reorderLaneTransforms,
   validatePatternGraph,
@@ -133,6 +134,32 @@ describe("PatternGraph lane mutations", () => {
       (n) => n.id === (lane3 as any).head && n.type === "transformChain",
     ) as any;
     expect(chain3.methods.map((m: any) => m.name)).toEqual(["bank"]);
+  });
+
+  it("updateLaneTransformArgs updates arguments for a specific transform", () => {
+    const { graph, laneId } = addLane(baseGraph);
+    const withSlow = addTransformToLane(graph, laneId, {
+      name: "slow",
+      args: [2],
+    });
+
+    const lane = withSlow.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    ) as any;
+    const chain = withSlow.nodes.find(
+      (n) => n.id === lane.head && n.type === "transformChain",
+    ) as any;
+
+    const slowId = chain.methods[0].id as string;
+    const updated = updateLaneTransformArgs(withSlow, laneId, slowId, [4]);
+    const laneUpdated = updated.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    ) as any;
+    const chainUpdated = updated.nodes.find(
+      (n) => n.id === laneUpdated.head && n.type === "transformChain",
+    ) as any;
+
+    expect(chainUpdated.methods[0].args).toEqual([4]);
   });
 
   it("validatePatternGraph rejects non-parallel root", () => {

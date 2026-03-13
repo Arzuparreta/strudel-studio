@@ -288,6 +288,37 @@ export function addTransformToLane(
 }
 
 /**
+ * Update the arguments for a specific transform in a lane's transformChain.
+ */
+export function updateLaneTransformArgs(
+  graph: PatternGraph,
+  laneId: LaneId,
+  transformId: TransformId,
+  nextArgs: unknown[],
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const chain = chainForLane(cloned, laneId);
+
+  const updatedChain: TransformChainNode = {
+    ...chain,
+    methods: chain.methods.map((m) =>
+      m.id === transformId
+        ? {
+            ...m,
+            args: nextArgs,
+          }
+        : m,
+    ),
+  };
+
+  cloned.nodes = cloned.nodes.map((n) =>
+    n.id === chain.id ? updatedChain : n,
+  );
+
+  return cloned;
+}
+
+/**
  * Remove a transform from a lane's transformChain by method id.
  */
 export function removeTransformFromLane(

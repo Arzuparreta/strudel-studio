@@ -28,6 +28,7 @@ export {
   setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
+  updateLaneTransformArgs,
   removeTransformFromLane,
   reorderLaneTransforms,
   validatePatternGraph,

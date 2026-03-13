@@ -23,6 +23,7 @@ import {
   coerceTransformArgs,
 } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
+import { GraphCanvas } from "@strudel-studio/ui-components";
 import { HapList } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
@@ -531,6 +532,15 @@ export default function App() {
             </span>
           )}
         </div>
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Composition graph</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Read-only visualization of the current PatternGraph structure. This
+          view focuses on the parallel root and its lane children.
+        </p>
+        <GraphCanvas graph={graph} />
       </section>
     </main>
   );

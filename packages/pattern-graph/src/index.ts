@@ -17,5 +17,5 @@ export type {
   TransformChainNode,
   CompositionNode,
   OpaqueGraphNode,
-} from "./schema.js;
+} from "./schema.js";
 

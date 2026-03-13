@@ -18,7 +18,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@strudel-studio/pattern-ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

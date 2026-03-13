@@ -613,6 +613,14 @@ export default function App() {
                     ? (selectedLane as { name: string }).name
                     : selectedLane.id)
                 : "";
+            const selectedCycleHint =
+              selectedLane != null &&
+              typeof (selectedLane as { cycleHint?: number }).cycleHint ===
+                "number" &&
+              (selectedLane as { cycleHint: number }).cycleHint > 0
+                ? (selectedLane as { cycleHint: number }).cycleHint
+                : null;
+
             return (
               selectedLane &&
               canEditGraph && (
@@ -620,7 +628,7 @@ export default function App() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.35rem",
+                    gap: "0.5rem",
                     fontSize: "0.85rem",
                   }}
                 >
@@ -642,6 +650,39 @@ export default function App() {
                       fontSize: "0.85rem",
                       padding: "0.15rem 0.35rem",
                       width: "8rem",
+                    }}
+                  />
+                  <label htmlFor="composition-cycle-lane">Cycle:</label>
+                  <input
+                    id="composition-cycle-lane"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={
+                      selectedCycleHint !== null ? selectedCycleHint : ""
+                    }
+                    placeholder="—"
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const nextHint =
+                        !raw
+                          ? null
+                          : (() => {
+                              const n = Number.parseInt(raw, 10);
+                              return Number.isFinite(n) && n > 0 ? n : null;
+                            })();
+                      const next = setLaneCycleHint(
+                        graph,
+                        selectedLane.id,
+                        nextHint,
+                      );
+                      updateSourceFromGraph(next);
+                    }}
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: "0.85rem",
+                      padding: "0.15rem 0.35rem",
+                      width: "4rem",
                     }}
                   />
                 </div>

@@ -707,7 +707,7 @@ export default function App() {
             color: "#555",
           }}
         >
-          <span>Default transform for + Add transform:</span>
+          <span>Default for new lanes (each lane can override below):</span>
           <select
             value={selectedTransformName}
             onChange={(e) => setSelectedTransformName(e.target.value)}
@@ -753,12 +753,12 @@ export default function App() {
                   updateSourceFromGraph(next, mutedLanes);
                 },
                 onAddTransform: (laneId: string, transformNameFromLane?: string) => {
-                  // Per-lane selector (refinement 3): use lane's choice when provided,
-                  // else fall back to stored per-lane default or global default.
+                  // Per-lane selector (refinement 3): use lane's choice when provided and non-empty,
+                  // else fall back to global default (e.g. when lane has "(default)" selected).
+                  const laneChoice = laneTransformSelections[laneId];
                   const transformName =
                     transformNameFromLane ??
-                    laneTransformSelections[laneId] ??
-                    selectedTransformName;
+                    (laneChoice && laneChoice !== "" ? laneChoice : selectedTransformName);
                   const spec = getTransformSpec(transformName);
                   const name = spec?.name ?? transformName;
                   const args = spec

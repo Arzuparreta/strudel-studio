@@ -25,6 +25,12 @@ export interface LaneStackProps {
   onReorderTransforms?: (laneId: string, newOrder: string[]) => void;
   /** Remove a transform from a lane by transform id. */
   onRemoveTransform?: (laneId: string, transformId: string) => void;
+  /** Update arguments for a specific transform in a lane. */
+  onChangeTransformArgs?: (
+    laneId: string,
+    transformId: string,
+    nextArgs: unknown[],
+  ) => void;
 }
 
 function findNode(graph: PatternGraph, id: string): GraphNode | undefined {
@@ -308,6 +314,29 @@ export function LaneStack({
                       )}
                       )
                     </code>
+                    {onChangeTransformArgs && (
+                      <input
+                        type="text"
+                        value={m.args.map((arg) => String(arg)).join(", ")}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const parts = raw
+                            .split(",")
+                            .map((p) => p.trim())
+                            .filter((p) => p.length > 0);
+                          const nextArgs = parts.map((p) =>
+                            /^-?\d+(\.\d+)?$/.test(p) ? Number.parseFloat(p) : p,
+                          );
+                          onChangeTransformArgs(lane.id, m.id, nextArgs);
+                        }}
+                        style={{
+                          fontFamily: "inherit",
+                          fontSize: "0.75rem",
+                          padding: "0.1rem 0.25rem",
+                          minWidth: "4rem",
+                        }}
+                      />
+                    )}
                     {onReorderTransforms && chain.methods.length > 1 && (
                       <div style={{ display: "flex", gap: "0.15rem" }}>
                         <button

@@ -96,5 +96,56 @@ describe("LaneStack", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toEqual({ laneId: "lane_drums", hint: 4 });
   });
+
+  it("renders transform args input and emits changes when onChangeTransformArgs is provided", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_drums"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "chain_drums",
+        },
+        {
+          id: "chain_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [
+            { id: "m1", name: "slow", args: [2] },
+          ],
+        },
+      ],
+      edges: [],
+    };
+
+    const calls: Array<{ laneId: string; transformId: string; args: unknown[] }> = [];
+
+    const { getByDisplayValue } = render(
+      <LaneStack
+        graph={graph}
+        onChangeBasePattern={() => {}}
+        onChangeTransformArgs={(laneId, transformId, args) => {
+          calls.push({ laneId, transformId, args });
+        }}
+      />,
+    );
+
+    const argsInput = getByDisplayValue("2") as HTMLInputElement;
+    expect(argsInput).toBeTruthy();
+
+    argsInput.value = "4";
+    fireEvent.change(argsInput);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].laneId).toBe("lane_drums");
+    expect(calls[0].args).toEqual([4]);
+  });
 }
 

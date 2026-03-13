@@ -16,6 +16,7 @@ import {
   reorderLaneTransforms,
   validatePatternGraph,
 } from "@strudel-studio/pattern-graph";
+import { updateLaneTransformArgs } from "@strudel-studio/pattern-graph";
 import { TRANSFORM_REGISTRY, getTransformSpec } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { HapList } from "@strudel-studio/pattern-inspector";
@@ -332,6 +333,19 @@ export default function App() {
                 },
                 onRemoveTransform: (laneId: string, transformId: string) => {
                   const next = removeTransformFromLane(graph, laneId, transformId);
+                  updateSourceFromGraph(next);
+                },
+                onChangeTransformArgs: (
+                  laneId: string,
+                  transformId: string,
+                  nextArgs: unknown[],
+                ) => {
+                  const next = updateLaneTransformArgs(
+                    graph,
+                    laneId,
+                    transformId,
+                    nextArgs,
+                  );
                   updateSourceFromGraph(next);
                 },
               }

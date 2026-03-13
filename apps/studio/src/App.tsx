@@ -11,6 +11,7 @@ import {
   renameLane,
   changeLaneBasePattern,
   addTransformToLane,
+  setLaneCycleHint,
   removeTransformFromLane,
   reorderLaneTransforms,
   validatePatternGraph,
@@ -241,6 +242,10 @@ export default function App() {
                 },
                 onRenameLane: (laneId: string, newName: string) => {
                   const next = renameLane(graph, laneId, newName);
+                  updateSourceFromGraph(next);
+                },
+                onChangeCycleHint: (laneId: string, nextHint: number | null) => {
+                  const next = setLaneCycleHint(graph, laneId, nextHint);
                   updateSourceFromGraph(next);
                 },
                 onChangeBasePattern: (laneId: string, newMini: string) => {

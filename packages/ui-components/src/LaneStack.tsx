@@ -16,6 +16,8 @@ export interface LaneStackProps {
   onAddLane?: () => void;
   onDeleteLane?: (laneId: string) => void;
   onRenameLane?: (laneId: string, newName: string) => void;
+  /** Update the optional cycle length hint for a lane. */
+  onChangeCycleHint?: (laneId: string, next: number | null) => void;
   onChangeBasePattern?: (laneId: string, newMini: string) => void;
   /** Add a transform to the end of the lane's chain. */
   onAddTransform?: (laneId: string) => void;
@@ -80,6 +82,7 @@ export function LaneStack({
   onAddLane,
   onDeleteLane,
   onRenameLane,
+  onChangeCycleHint,
   onChangeBasePattern,
   onAddTransform,
   onReorderTransforms,
@@ -219,6 +222,50 @@ export function LaneStack({
                 <code>{chain.base.miniSerialization}</code>
               )}
             </div>
+
+            {onChangeCycleHint && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.8rem",
+                  color: "#555",
+                }}
+              >
+                <label htmlFor={`cycle-${lane.id}`}>Cycle length</label>
+                <input
+                  id={`cycle-${lane.id}`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={
+                    typeof lane.cycleHint === "number" && lane.cycleHint > 0
+                      ? lane.cycleHint
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    if (!raw) {
+                      onChangeCycleHint(lane.id, null);
+                      return;
+                    }
+                    const parsed = Number.parseInt(raw, 10);
+                    if (!Number.isFinite(parsed) || parsed <= 0) {
+                      onChangeCycleHint(lane.id, null);
+                      return;
+                    }
+                    onChangeCycleHint(lane.id, parsed === 1 ? null : parsed);
+                  }}
+                  style={{
+                    width: "4rem",
+                    fontFamily: "inherit",
+                    fontSize: "0.8rem",
+                    padding: "0.1rem 0.25rem",
+                  }}
+                />
+              </div>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
               <div

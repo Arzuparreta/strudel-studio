@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { LaneStack } from "./LaneStack.js";
 
@@ -41,6 +41,60 @@ describe("LaneStack", () => {
     // PatternGrid should render 2 rows * 4 steps = 8 buttons.
     const buttons = container.querySelectorAll("button");
     expect(buttons.length).toBe(8);
+  });
+
+  it("renders and emits cycle length edits when onChangeCycleHint is provided", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_drums"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "chain_drums",
+          // @ts-expect-error - cycleHint is optional in schema
+          cycleHint: 3,
+        },
+        {
+          id: "chain_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const calls: Array<{ laneId: string; hint: number | null }> = [];
+
+    const { container } = render(
+      <LaneStack
+        graph={graph}
+        onChangeBasePattern={() => {}}
+        onChangeCycleHint={(laneId, hint) => {
+          calls.push({ laneId, hint });
+        }}
+      />,
+    );
+
+    const input = container.querySelector(
+      'input[type="number"]',
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    expect(input?.value).toBe("3");
+
+    if (input) {
+      fireEvent.change(input, { target: { value: "4" } });
+    }
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({ laneId: "lane_drums", hint: 4 });
   });
 }
 

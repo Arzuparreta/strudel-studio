@@ -4,6 +4,7 @@ import {
   addLane,
   deleteLane,
   renameLane,
+  setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
   removeTransformFromLane,
@@ -60,6 +61,26 @@ describe("PatternGraph lane mutations", () => {
     const lane = renamed.nodes.find((n) => n.id === laneId);
     // @ts-expect-error - name is an optional UI field
     expect((lane as any).name).toBe("My Lane");
+  });
+
+  it("setLaneCycleHint updates or clears the lane cycle hint", () => {
+    const { graph, laneId } = addLane(baseGraph);
+
+    const withHint = setLaneCycleHint(graph, laneId, 4);
+    const laneWithHint = withHint.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    ) as any;
+    expect(laneWithHint.cycleHint).toBe(4);
+
+    const cleared = setLaneCycleHint(withHint, laneId, null);
+    const laneCleared = cleared.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    ) as any;
+    expect(laneCleared.cycleHint).toBeUndefined();
+
+    // Graph should still validate after changing hints.
+    expect(() => validatePatternGraph(withHint)).not.toThrow();
+    expect(() => validatePatternGraph(cleared)).not.toThrow();
   });
 
   it("changeLaneBasePattern updates the base mini string", () => {

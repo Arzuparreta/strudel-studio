@@ -198,6 +198,36 @@ export function renameLane(
 }
 
 /**
+ * Update the optional cycle length hint for a lane.
+ *
+ * - When cycleHint is a positive number and not 1, it is stored on the lane.
+ * - When cycleHint is null, 1, or a non-positive number, the hint is removed so
+ *   codegen falls back to the default behavior.
+ */
+export function setLaneCycleHint(
+  graph: PatternGraph,
+  laneId: LaneId,
+  cycleHint: number | null,
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const lane = laneForId(cloned, laneId);
+
+  const normalized =
+    typeof cycleHint === "number" && Number.isFinite(cycleHint) && cycleHint > 0
+      ? cycleHint
+      : undefined;
+
+  const updatedLane: LaneNode = {
+    ...lane,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    ...(normalized === undefined ? { cycleHint: undefined } : { cycleHint: normalized }),
+  };
+
+  cloned.nodes = cloned.nodes.map((n) => (n.id === laneId ? updatedLane : n));
+  return cloned;
+}
+
+/**
  * Change the base mini-notation string for a lane's transformChain.
  */
 export function changeLaneBasePattern(

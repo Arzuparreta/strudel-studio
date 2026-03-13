@@ -296,9 +296,19 @@ export default function App() {
                       const argString = (m.args ?? [])
                         .map((a) => String(a))
                         .join(", ");
+                      const spec = m.name ? getTransformSpec(m.name) : undefined;
+                      const tooltip =
+                        spec?.description ??
+                        (spec
+                          ? `${spec.name} transform`
+                          : m.name
+                          ? `${m.name} transform`
+                          : "transform");
+
                       return (
                         <span
                           key={m.id}
+                          title={tooltip}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",

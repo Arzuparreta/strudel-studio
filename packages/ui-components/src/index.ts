@@ -6,3 +6,4 @@
 export { LaneStack, type LaneStackProps } from "./LaneStack.js";
 export { getTopLevelTrackIds, getNodeLabel } from "./laneStackUtils.js";
 export { PatternGrid, type PatternGridProps } from "./PatternGrid.js";
+export { GraphCanvas, type GraphCanvasProps } from "./GraphCanvas.js";

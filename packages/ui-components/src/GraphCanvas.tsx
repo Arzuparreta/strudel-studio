@@ -4,9 +4,16 @@ import { getNodeLabel } from "./laneStackUtils.js";
 export interface GraphCanvasProps {
   graph: PatternGraph;
   className?: string;
+  selectedNodeId?: string;
+  onSelectNode?: (nodeId: string) => void;
 }
 
-export function GraphCanvas({ graph, className }: GraphCanvasProps) {
+export function GraphCanvas({
+  graph,
+  className,
+  selectedNodeId,
+  onSelectNode,
+}: GraphCanvasProps) {
   const nodesById = new Map<string, GraphNode>(
     graph.nodes.map((n) => [n.id, n]),
   );
@@ -62,10 +69,17 @@ export function GraphCanvas({ graph, className }: GraphCanvasProps) {
             alignSelf: "center",
             padding: "0.3rem 0.6rem",
             borderRadius: "999px",
-            border: "1px solid #aaa",
-            backgroundColor: "#f3f3f3",
+            border:
+              selectedNodeId === root.id ? "1px solid #007acc" : "1px solid #aaa",
+            backgroundColor:
+              selectedNodeId === root.id ? "#e6f3ff" : "#f3f3f3",
             fontFamily: "monospace",
             fontSize: "0.85rem",
+          }}
+          onClick={() => {
+            if (onSelectNode) {
+              onSelectNode(root.id);
+            }
           }}
         >
           {getNodeLabel(graph, root.id)}
@@ -108,6 +122,17 @@ export function GraphCanvas({ graph, className }: GraphCanvasProps) {
                     display: "flex",
                     flexDirection: "column",
                     gap: "0.25rem",
+                    borderColor:
+                      selectedNodeId === laneId ? "#007acc" : "#ccc",
+                    boxShadow:
+                      selectedNodeId === laneId
+                        ? "0 0 0 2px rgba(0,122,204,0.15)"
+                        : "0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                  onClick={() => {
+                    if (onSelectNode) {
+                      onSelectNode(laneId);
+                    }
                   }}
                 >
                   <div

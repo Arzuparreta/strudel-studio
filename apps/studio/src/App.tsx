@@ -98,6 +98,9 @@ export default function App() {
     Record<string, string>
   >({});
   const [haps, setHaps] = useState<import("@strudel-studio/strudel-bridge").Hap[]>([]);
+  const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(
+    null,
+  );
 
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
@@ -540,7 +543,42 @@ export default function App() {
           Read-only visualization of the current PatternGraph structure. This
           view focuses on the parallel root and its lane children.
         </p>
-        <GraphCanvas graph={graph} />
+        <div
+          style={{
+            marginBottom: "0.75rem",
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+          }}
+        >
+          <button
+            type="button"
+            disabled={!canEditGraph}
+            onClick={() => {
+              if (!canEditGraph) return;
+              const { graph: next, laneId } = addLane(graph);
+              setLaneTransformSelections((prev) => ({
+                ...prev,
+                [laneId]: selectedTransformName,
+              }));
+              setSelectedGraphNodeId(laneId);
+              updateSourceFromGraph(next);
+            }}
+          >
+            Add lane under parallel root
+          </button>
+          {!canEditGraph && (
+            <span style={{ fontSize: "0.8rem", color: "#777" }}>
+              Editing is disabled while the document contains opaque regions or
+              an unsupported AST.
+            </span>
+          )}
+        </div>
+        <GraphCanvas
+          graph={graph}
+          selectedNodeId={selectedGraphNodeId ?? undefined}
+          onSelectNode={(id) => setSelectedGraphNodeId(id)}
+        />
       </section>
     </main>
   );

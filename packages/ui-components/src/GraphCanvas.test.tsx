@@ -48,5 +48,47 @@ describe("GraphCanvas", () => {
     expect(getByText("lane_drums")).toBeTruthy();
     expect(getByText("lane_bass")).toBeTruthy();
   });
+
+  it("emits selection events when nodes are clicked", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_drums"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "chain_drums",
+        },
+        {
+          id: "chain_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const calls: string[] = [];
+
+    const { getByText } = render(
+      <GraphCanvas
+        graph={graph}
+        onSelectNode={(id) => {
+          calls.push(id);
+        }}
+      />,
+    );
+
+    getByText("lane_drums").click();
+
+    expect(calls).toEqual(["lane_drums"]);
+  });
 });
 

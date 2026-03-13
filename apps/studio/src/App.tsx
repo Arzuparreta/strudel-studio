@@ -7,6 +7,7 @@ import type { ParseResult } from "@strudel-studio/strudel-parser";
 import { graphToAst } from "@strudel-studio/pattern-graph";
 import { LaneStack } from "@strudel-studio/ui-components";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
+import { MonacoEditor } from "./monaco";
 
 const demoAst: TransformChain = {
   id: "demo-chain",
@@ -176,16 +177,7 @@ export default function App() {
 
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Generated Strudel code</h2>
-        <textarea
-          value={source}
-          onChange={(event) => setSource(event.target.value)}
-          rows={4}
-          style={{
-            width: "100%",
-            maxWidth: "48rem",
-            fontFamily: "monospace",
-          }}
-        />
+        <MonacoEditor value={source} onChange={setSource} />
         <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
           <button type="button" onClick={handleEvaluate}>
             Generate &amp; Play

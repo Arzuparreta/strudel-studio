@@ -87,7 +87,7 @@ Evaluation is intentionally **decoupled** from parsing:
 
 In v0.2:
 
-- UI shows parse status but does **not** yet perform automatic AST → source regeneration after text edits; the source textarea remains the single owner for text edits.
+- UI shows parse status but does **not** yet perform automatic AST → source regeneration after text edits; the Monaco editor remains the single owner for text edits.
 
 ## 7. Future work — path‑based rebinding (v0.2+)
 

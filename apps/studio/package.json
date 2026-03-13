@@ -11,6 +11,7 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@strudel-studio/code-generator": "workspace:*",
     "@strudel-studio/pattern-graph": "workspace:*",
     "@strudel-studio/strudel-bridge": "workspace:*",

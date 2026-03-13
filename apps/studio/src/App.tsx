@@ -237,54 +237,90 @@ export default function App() {
       (n) => n.type === "lane",
     ) as Array<{ id: string; head: string }>;
 
-    if (lanes.length === 0) {
-      return (
-        <p style={{ fontSize: "0.85rem", color: "#777" }}>
-          No lanes available for transform summary.
-        </p>
-      );
-    }
-
     return (
-      <ul>
-        {lanes.map((lane) => {
-        const chain = graphToDescribe.nodes.find(
-          (n) => n.id === lane.head && n.type === "transformChain",
-        ) as
-          | {
-              id: string;
-              type: "transformChain";
-              base: { kind: string; miniSerialization: string };
-              methods: { id: string; name: string; args: unknown[] }[];
-            }
-          | undefined;
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        {lanes.length === 0 ? (
+          <p style={{ fontSize: "0.85rem", color: "#777" }}>
+            No lanes available for transform summary.
+          </p>
+        ) : (
+          lanes.map((lane) => {
+            const chain = graphToDescribe.nodes.find(
+              (n) => n.id === lane.head && n.type === "transformChain",
+            ) as
+              | {
+                  id: string;
+                  type: "transformChain";
+                  base: { kind: string; miniSerialization: string };
+                  methods: { id: string; name: string; args: unknown[] }[];
+                }
+              | undefined;
 
-        const baseLabel = chain
-          ? `${chain.base.kind}("${chain.base.miniSerialization}")`
-          : "(no transform chain)";
+            const methods = chain?.methods ?? [];
 
-        const methods = chain?.methods ?? [];
-        const methodsLabel =
-          methods.length === 0
-            ? "(no transforms)"
-            : methods
-                .map((m) => {
-                  const argString = (m.args ?? [])
-                    .map((a) => String(a))
-                    .join(", ");
-                  return `${m.name ?? "(unknown)"}(${argString})`;
-                })
-                .join(" → ");
-
-          return (
-            <li key={lane.id}>
-              <code>
-                  {lane.id}: {baseLabel} {methodsLabel ?? "(no transforms)"}
-              </code>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <div
+                key={lane.id}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.25rem",
+                  fontSize: "0.85rem",
+                }}
+              >
+                <div>
+                  <code>{lane.id}</code>
+                  {chain ? (
+                    <>
+                      {" "}
+                      · base{" "}
+                      <code>
+                        {chain.base.kind}("{chain.base.miniSerialization}")
+                      </code>
+                    </>
+                  ) : (
+                    <> · (no transform chain)</>
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "0.25rem",
+                  }}
+                >
+                  {methods.length === 0 ? (
+                    <span style={{ color: "#888" }}>(no transforms)</span>
+                  ) : (
+                    methods.map((m) => {
+                      const argString = (m.args ?? [])
+                        .map((a) => String(a))
+                        .join(", ");
+                      return (
+                        <span
+                          key={m.id}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "0.1rem 0.4rem",
+                            borderRadius: "999px",
+                            border: "1px solid #ccc",
+                            backgroundColor: "#f9f9f9",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {m.name ?? "(unknown)"}(
+                          {argString})
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     );
   }
 

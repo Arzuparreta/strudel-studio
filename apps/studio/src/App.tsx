@@ -36,6 +36,7 @@ import { GraphCanvas } from "@strudel-studio/ui-components";
 import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
+import { getSuggestions } from "./suggestions";
 import "./plugins";
 
 const PATTERN_LIBRARY_STORAGE_KEY = "strudel-studio-pattern-library";
@@ -1237,6 +1238,57 @@ export default function App() {
           <p style={{ fontSize: "0.85rem", color: "#888" }}>
             Select a lane in the composition graph or in the lane list above to
             see parameter sliders.
+          </p>
+        )}
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Suggestions (v1.3)</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Rule-based ideas for the selected lane: add transforms, variations, or
+          fills. Select a lane to see suggestions.
+        </p>
+        {selectedGraphNodeId &&
+        graph.nodes.some(
+          (n) => n.id === selectedGraphNodeId && n.type === "lane",
+        ) ? (
+          (() => {
+            const suggestions = getSuggestions(graph, selectedGraphNodeId);
+            if (suggestions.length === 0) {
+              return (
+                <p style={{ fontSize: "0.85rem", color: "#888" }}>
+                  No suggestions for this lane. Add a transform or change the
+                  base pattern to get ideas.
+                </p>
+              );
+            }
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.35rem",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      const next = s.apply(graph);
+                      updateSourceFromGraph(next, mutedLanes);
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()
+        ) : (
+          <p style={{ fontSize: "0.85rem", color: "#888" }}>
+            Select a lane in the graph or lane list to see suggestions.
           </p>
         )}
       </section>

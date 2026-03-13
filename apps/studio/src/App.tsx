@@ -661,6 +661,15 @@ export default function App() {
           graph={graph}
           selectedNodeId={selectedGraphNodeId ?? undefined}
           onSelectNode={(id) => setSelectedGraphNodeId(id)}
+          onReorderLanes={
+            canEditGraph &&
+            graph.nodes.find((n) => n.id === graph.root)?.type === "parallel"
+              ? (newOrder: string[]) => {
+                  const next = reorderParallelLanes(graph, newOrder);
+                  updateSourceFromGraph(next);
+                }
+              : undefined
+          }
         />
       </section>
     </main>

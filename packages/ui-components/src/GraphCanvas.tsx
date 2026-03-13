@@ -6,6 +6,8 @@ export interface GraphCanvasProps {
   className?: string;
   selectedNodeId?: string;
   onSelectNode?: (nodeId: string) => void;
+  /** When provided, lane cards become draggable to reorder; called with the new lane id order. */
+  onReorderLanes?: (newOrder: string[]) => void;
 }
 
 function isCompositionRoot(
@@ -19,6 +21,7 @@ export function GraphCanvas({
   className,
   selectedNodeId,
   onSelectNode,
+  onReorderLanes,
 }: GraphCanvasProps) {
   const nodesById = new Map<string, GraphNode>(
     graph.nodes.map((n) => [n.id, n]),
@@ -117,7 +120,7 @@ export function GraphCanvas({
               No lanes attached to the {root.type} root.
             </p>
           ) : (
-            laneIds.map((laneId) => {
+            laneIds.map((laneId, idx) => {
               const laneNode = nodesById.get(laneId);
               if (!laneNode || laneNode.type !== "lane") {
                 return null;
@@ -125,9 +128,34 @@ export function GraphCanvas({
               const chainNode = nodesById.get(laneNode.head);
 
               const isSelected = selectedNodeId === laneId;
+              const canDrag =
+                !!onReorderLanes && laneIds.length > 1;
+
               return (
                 <div
                   key={laneId}
+                  draggable={canDrag}
+                  onDragStart={(e) => {
+                    if (!onReorderLanes) return;
+                    e.dataTransfer.setData("text/plain", laneId);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    if (!onReorderLanes) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    if (!onReorderLanes) return;
+                    e.preventDefault();
+                    const draggedId = e.dataTransfer.getData("text/plain");
+                    const fromIndex = laneIds.indexOf(draggedId);
+                    if (fromIndex === -1 || fromIndex === idx) return;
+                    const newOrder = [...laneIds];
+                    const [removed] = newOrder.splice(fromIndex, 1);
+                    newOrder.splice(idx, 0, removed!);
+                    onReorderLanes(newOrder);
+                  }}
                   style={{
                     minWidth: "10rem",
                     maxWidth: "14rem",
@@ -145,6 +173,7 @@ export function GraphCanvas({
                     display: "flex",
                     flexDirection: "column",
                     gap: "0.25rem",
+                    cursor: canDrag ? "grab" : undefined,
                   }}
                   onClick={() => {
                     if (onSelectNode) {

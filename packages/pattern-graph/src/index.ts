@@ -25,6 +25,7 @@ export {
   addLane,
   deleteLane,
   renameLane,
+  setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
   removeTransformFromLane,

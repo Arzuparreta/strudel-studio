@@ -21,7 +21,7 @@ Code remains canonical.
 
 # Development Milestone Ladder
 
-## v0.3 (current state)
+## v0.3 
 
 **Status:** Infrastructure mostly done.
 

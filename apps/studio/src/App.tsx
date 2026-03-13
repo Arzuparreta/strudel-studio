@@ -3,6 +3,7 @@ import { astVersion, EvalScheduler, hushAll } from "@strudel-studio/strudel-brid
 import { generate } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
+import type { ParseResult } from "@strudel-studio/strudel-parser";
 
 const demoAst: TransformChain = {
   id: "demo-chain",
@@ -32,6 +33,7 @@ export default function App() {
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
   const [hasOpaques, setHasOpaques] = useState(false);
+  const [lastGoodParse, setLastGoodParse] = useState<ParseResult | null>(null);
 
   const scheduler = useMemo(
     () =>
@@ -45,6 +47,9 @@ export default function App() {
   // Debounced parse whenever the source changes.
   useEffect(() => {
     let cancelled = false;
+    // While the user is editing and before debounce fires, reflect a "typing" state.
+    setParseInfo("typing…");
+
     const handle = setTimeout(() => {
       try {
         const result = parseToAstOrOpaque(source);
@@ -53,6 +58,14 @@ export default function App() {
         }
         const nextHasAst = result.ast != null;
         const nextHasOpaques = result.opaques.length > 0;
+
+        // Keep track of the last good parse result so future features
+        // (graph/AST views) can rely on a stable projection even if a
+        // subsequent parse fails.
+        if (nextHasAst || nextHasOpaques) {
+          setLastGoodParse(result);
+        }
+
         setHasSubsetAst(nextHasAst);
         setHasOpaques(nextHasOpaques);
 
@@ -63,6 +76,7 @@ export default function App() {
         } else if (!nextHasAst && nextHasOpaques) {
           setParseInfo("parsed: opaque-only (unsupported or complex code)");
         } else {
+          setLastGoodParse(null);
           setParseInfo("parsed: empty document");
         }
       } catch {

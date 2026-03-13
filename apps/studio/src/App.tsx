@@ -150,6 +150,8 @@ export default function App() {
     setSource(generate(demoAst));
   }, []);
 
+  const canEditGraph = hasSubsetAst && !hasOpaques;
+
   function updateSourceFromGraph(nextGraph: PatternGraph) {
     try {
       validatePatternGraph(nextGraph);
@@ -227,44 +229,50 @@ export default function App() {
         </p>
         <LaneStack
           graph={graph}
-          onAddLane={() => {
-            const { graph: next } = addLane(graph);
-            updateSourceFromGraph(next);
-          }}
-          onDeleteLane={(laneId) => {
-            const next = deleteLane(graph, laneId);
-            updateSourceFromGraph(next);
-          }}
-          onRenameLane={(laneId, newName) => {
-            const next = renameLane(graph, laneId, newName);
-            updateSourceFromGraph(next);
-          }}
-          onChangeBasePattern={(laneId, newMini) => {
-            const next = changeLaneBasePattern(graph, laneId, newMini);
-            updateSourceFromGraph(next);
-          }}
-          onAddTransform={(laneId) => {
-            // For v0.4, provide a simple default transform. Future versions
-            // will surface the transform registry and argument editing.
-            const next = addTransformToLane(graph, laneId, {
-              name: "slow",
-              args: [2],
-            });
-            updateSourceFromGraph(next);
-          }}
-          onReorderTransforms={(laneId, newOrder) => {
-            const next = reorderLaneTransforms(graph, laneId, newOrder);
-            updateSourceFromGraph(next);
-          }}
-          onRemoveTransform={(laneId, transformId) => {
-            const next = removeTransformFromLane(graph, laneId, transformId);
-            updateSourceFromGraph(next);
-          }}
+          {...(canEditGraph
+            ? {
+                onAddLane: () => {
+                  const { graph: next } = addLane(graph);
+                  updateSourceFromGraph(next);
+                },
+                onDeleteLane: (laneId: string) => {
+                  const next = deleteLane(graph, laneId);
+                  updateSourceFromGraph(next);
+                },
+                onRenameLane: (laneId: string, newName: string) => {
+                  const next = renameLane(graph, laneId, newName);
+                  updateSourceFromGraph(next);
+                },
+                onChangeBasePattern: (laneId: string, newMini: string) => {
+                  const next = changeLaneBasePattern(graph, laneId, newMini);
+                  updateSourceFromGraph(next);
+                },
+                onAddTransform: (laneId: string) => {
+                  // For v0.4, provide a simple default transform. Future versions
+                  // will surface the transform registry and argument editing.
+                  const next = addTransformToLane(graph, laneId, {
+                    name: "slow",
+                    args: [2],
+                  });
+                  updateSourceFromGraph(next);
+                },
+                onReorderTransforms: (laneId: string, newOrder: string[]) => {
+                  const next = reorderLaneTransforms(graph, laneId, newOrder);
+                  updateSourceFromGraph(next);
+                },
+                onRemoveTransform: (laneId: string, transformId: string) => {
+                  const next = removeTransformFromLane(graph, laneId, transformId);
+                  updateSourceFromGraph(next);
+                },
+              }
+            : {})}
         />
         <div style={{ marginTop: "0.75rem" }}>
           <button
             type="button"
+            disabled={!canEditGraph}
             onClick={() => {
+              if (!canEditGraph) return;
               updateSourceFromGraph(graph);
             }}
           >

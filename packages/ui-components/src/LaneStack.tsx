@@ -5,6 +5,7 @@
 
 import type { PatternGraph, GraphNode, TransformChainNode, LaneNode } from "@strudel-studio/pattern-graph";
 import { getTopLevelTrackIds, getNodeLabel } from "./laneStackUtils.js";
+import { PatternGrid } from "./PatternGrid.js";
 
 export interface LaneStackProps {
   /** The pattern graph to display (e.g. parallel root with lanes). */
@@ -179,17 +180,24 @@ export function LaneStack({
                 Base pattern
               </label>
               {onChangeBasePattern ? (
-                <input
-                  type="text"
-                  value={chain.base.miniSerialization}
-                  onChange={(e) => onChangeBasePattern(lane.id, e.target.value)}
-                  style={{
-                    width: "100%",
-                    fontFamily: "monospace",
-                    fontSize: "0.85rem",
-                    padding: "0.15rem 0.25rem",
-                  }}
-                />
+                <>
+                  <input
+                    type="text"
+                    value={chain.base.miniSerialization}
+                    onChange={(e) => onChangeBasePattern(lane.id, e.target.value)}
+                    style={{
+                      width: "100%",
+                      fontFamily: "monospace",
+                      fontSize: "0.85rem",
+                      padding: "0.15rem 0.25rem",
+                    }}
+                  />
+                  <PatternGrid
+                    mini={chain.base.miniSerialization}
+                    steps={4}
+                    onChangeMini={(next) => onChangeBasePattern(lane.id, next)}
+                  />
+                </>
               ) : (
                 <code>{chain.base.miniSerialization}</code>
               )}

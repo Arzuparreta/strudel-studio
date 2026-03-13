@@ -20,7 +20,7 @@ export interface LaneStackProps {
   onChangeCycleHint?: (laneId: string, next: number | null) => void;
   onChangeBasePattern?: (laneId: string, newMini: string) => void;
   /** Add a transform to the end of the lane's chain. */
-  onAddTransform?: (laneId: string) => void;
+  onAddTransform?: (laneId: string, transformName?: string) => void;
   /** Reorder transforms by id (newOrder must be a permutation). */
   onReorderTransforms?: (laneId: string, newOrder: string[]) => void;
   /** Remove a transform from a lane by transform id. */

@@ -232,6 +232,66 @@ export default function App() {
     setStatus("stopped");
   }
 
+  function renderTransformSummary(graphToDescribe: PatternGraph) {
+    const lanes = graphToDescribe.nodes.filter(
+      (n) => n.type === "lane",
+    ) as Array<{ id: string; head: string }>;
+
+    if (lanes.length === 0) {
+      return (
+        <p style={{ fontSize: "0.85rem", color: "#777" }}>
+          No lanes available for transform summary.
+        </p>
+      );
+    }
+
+    return (
+      <ul>
+        {lanes.map((lane) => {
+          const chain = graphToDescribe.nodes.find(
+            (n) => n.id === lane.head && n.type === "transformChain",
+          ) as
+            | {
+                id: string;
+                type: "transformChain";
+                base: { kind: string; miniSerialization: string };
+                methods: { id: string; name: string; args: unknown[] }[];
+              }
+            | undefined;
+
+          if (!chain) {
+            return (
+              <li key={lane.id}>
+                <code>lane {lane.id}: (no transform chain found)</code>
+              </li>
+            );
+          }
+
+          const baseLabel = `${chain.base.kind}("${chain.base.miniSerialization}")`;
+          const methodsLabel =
+            chain.methods.length === 0
+              ? "(no transforms)"
+              : chain.methods
+                  .map((m) => {
+                    const argString = m.args
+                      .map((a) => String(a))
+                      .join(", ");
+                    return `${m.name}(${argString})`;
+                  })
+                  .join(" → ");
+
+          return (
+            <li key={lane.id}>
+              <code>
+                {lane.id}: {baseLabel} {methodsLabel}
+              </code>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
   return (
     <main style={{ padding: "1.5rem", fontFamily: "system-ui, sans-serif" }}>
       <h1>Strudel Studio</h1>
@@ -261,6 +321,16 @@ export default function App() {
           (time window [0, 1]).
         </p>
         <HapList haps={haps} />
+        <div style={{ marginTop: "0.75rem" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+            Lane transform summary
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "#555" }}>
+            Read-only summary of each lane&apos;s base pattern and transform
+            chain, derived from the current PatternGraph.
+          </p>
+          {renderTransformSummary(graph)}
+        </div>
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>

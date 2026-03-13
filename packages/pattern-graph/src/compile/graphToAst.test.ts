@@ -32,7 +32,7 @@ describe("graphToAst", () => {
     expect(ast.methods.map((m) => m.name)).toEqual(["bank", "slow"]);
   });
 
-  it("compiles a lane root graph by following the head transformChain", () => {
+  it("compiles a lane root graph and applies cycleHint as a slow transform when no explicit slow is present", () => {
     const graph: PatternGraph = {
       graphVersion: 2,
       astVersion: 1,
@@ -41,7 +41,7 @@ describe("graphToAst", () => {
         {
           id: "lane_drums",
           type: "lane",
-          cycleHint: 1,
+          cycleHint: 2,
           head: "n_drums_chain",
         },
         {
@@ -51,10 +51,7 @@ describe("graphToAst", () => {
             kind: "s",
             miniSerialization: "bd buddy",
           },
-          methods: [
-            { id: "m_bank", name: "bank", args: ["tr909"] },
-            { id: "m_slow", name: "slow", args: [2] },
-          ],
+          methods: [{ id: "m_bank", name: "bank", args: ["tr909"] }],
         },
       ],
       edges: [],
@@ -66,6 +63,8 @@ describe("graphToAst", () => {
     expect(ast.base.kind).toBe("s");
     expect(ast.base.mini).toBe("bd buddy");
     expect(ast.methods.map((m) => m.name)).toEqual(["bank", "slow"]);
+    const slow = ast.methods.find((m) => m.name === "slow");
+    expect(slow?.args).toEqual([2]);
   });
 
   it("throws for unsupported root node types", () => {

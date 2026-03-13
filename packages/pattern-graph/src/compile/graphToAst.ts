@@ -42,11 +42,27 @@ function toLaneNode(node: GraphNode): LaneNode {
  * - base.mini: taken from miniSerialization
  * - methods: sorted by canonical method order for the current astVersion
  */
-function compileTransformChainNode(node: TransformChainNode): TransformChain {
+function compileTransformChainNode(
+  node: TransformChainNode,
+  lane?: LaneNode,
+): TransformChain {
   const baseKind = node.base.kind;
   const baseMini = node.base.miniSerialization;
 
-  const sortedMethods = [...node.methods].sort(
+  const methods = [...node.methods];
+
+  if (lane && typeof lane.cycleHint === "number" && lane.cycleHint !== 1) {
+    const hasSlow = methods.some((m) => m.name === "slow");
+    if (!hasSlow) {
+      methods.push({
+        id: `${node.id}_cycle`,
+        name: "slow",
+        args: [lane.cycleHint],
+      });
+    }
+  }
+
+  const sortedMethods = methods.sort(
     (a, b) =>
       canonicalIndexOf(astVersion, a.name) -
       canonicalIndexOf(astVersion, b.name),
@@ -87,7 +103,7 @@ export function graphToAst(graph: PatternGraph): TransformChain {
     const lane = toLaneNode(rootNode);
     const headNode = findNode(graph, lane.head);
     const chain = toTransformChainNode(headNode);
-    return compileTransformChainNode(chain);
+    return compileTransformChainNode(chain, lane);
   }
 
   throw new Error(

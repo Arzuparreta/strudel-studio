@@ -276,7 +276,9 @@ export default function App() {
     }
 
     if (!result.pattern) {
-      setStatus("no pattern produced");
+      setStatus(
+        "evaluated (pattern reference unavailable; audio may still be playing)",
+      );
       return;
     }
 
@@ -442,6 +444,9 @@ export default function App() {
         </div>
         <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
           Parse status: {parseInfo}
+        </p>
+        <p style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#888" }}>
+          If you hear sound after Generate &amp; Play, the pattern is running.
         </p>
       </section>
 

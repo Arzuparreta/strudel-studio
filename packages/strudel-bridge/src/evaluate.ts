@@ -3,7 +3,9 @@ import type { Pattern } from "@strudel/core";
 let initialized = false;
 
 type StrudelWebModule = {
-  initStrudel: () => void;
+  initStrudel: (opts?: {
+    prebake?: () => unknown;
+  }) => void;
   evaluate: (code: string) => unknown;
   hush?: () => void;
 };
@@ -12,7 +14,15 @@ async function loadStrudelWeb(): Promise<StrudelWebModule> {
   const mod = (await import("@strudel/web")) as StrudelWebModule;
 
   if (!initialized) {
-    mod.initStrudel();
+    mod.initStrudel({
+      prebake: () => {
+        const g = globalThis as Record<string, any>;
+        if (typeof g.samples === "function") {
+          g.samples("github:tidalcycles/dirt-samples");
+          g.samples("github:ritchse/tidal-drum-machines");
+        }
+      },
+    });
     initialized = true;
   }
 

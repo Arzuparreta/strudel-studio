@@ -99,6 +99,7 @@ export function LaneStack({
   onAddTransform,
   onReorderTransforms,
   onRemoveTransform,
+  onChangeTransformArgs,
   availableTransforms,
   selectedTransformForLane,
   onSelectTransformForLane,
@@ -151,8 +152,13 @@ export function LaneStack({
         }
 
         const { lane, chain } = laneAndChain;
-        // @ts-expect-error - name is an optional UI-only field on LaneNode
-        const laneName: string = (lane as any).name ?? lane.id;
+        const rawLaneName = (lane as any).name;
+        const laneName =
+          typeof rawLaneName === "string" && rawLaneName.length > 0
+            ? rawLaneName
+            : lane.id;
+        const selectedTransformName =
+          (selectedTransformForLane && selectedTransformForLane[lane.id]) || "";
         const { voices, steps } = deriveVoicesAndSteps(
           chain.base.miniSerialization,
         );
@@ -300,7 +306,7 @@ export function LaneStack({
                 >
                   {onSelectTransformForLane && selectedTransformForLane && (
                     <select
-                      value={selectedTransformForLane[lane.id] ?? ""}
+                      value={selectedTransformName}
                       onChange={(e) =>
                         onSelectTransformForLane(lane.id, e.target.value)
                       }
@@ -383,8 +389,8 @@ export function LaneStack({
                             if (!onReorderTransforms) return;
                             const ids = chain.methods.map((mm) => mm.id);
                             if (idx > 0) {
-                              const tmp = ids[idx - 1];
-                              ids[idx - 1] = ids[idx];
+                              const tmp = ids[idx - 1]!;
+                              ids[idx - 1] = ids[idx]!;
                               ids[idx] = tmp;
                             }
                             onReorderTransforms(lane.id, ids);
@@ -400,8 +406,8 @@ export function LaneStack({
                             if (!onReorderTransforms) return;
                             const ids = chain.methods.map((mm) => mm.id);
                             if (idx < ids.length - 1) {
-                              const tmp = ids[idx + 1];
-                              ids[idx + 1] = ids[idx];
+                              const tmp = ids[idx + 1]!;
+                              ids[idx + 1] = ids[idx]!;
                               ids[idx] = tmp;
                             }
                             onReorderTransforms(lane.id, ids);

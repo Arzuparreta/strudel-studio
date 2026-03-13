@@ -25,8 +25,8 @@ function miniToGrid(mini: string, voices: string[], steps: number): boolean[][] 
       continue;
     }
     const rowIndex = voices.indexOf(token);
-    if (rowIndex >= 0) {
-      grid[rowIndex][col] = true;
+    if (rowIndex >= 0 && grid[rowIndex]) {
+      grid[rowIndex]![col] = true;
     }
   }
 
@@ -34,19 +34,24 @@ function miniToGrid(mini: string, voices: string[], steps: number): boolean[][] 
 }
 
 function gridToMini(grid: boolean[][], voices: string[]): string {
-  if (grid.length === 0 || grid[0].length === 0) {
+  if (grid.length === 0) {
+    return "";
+  }
+  const firstRow = grid[0];
+  if (!firstRow || firstRow.length === 0) {
     return "";
   }
 
   const rows = grid.length;
-  const steps = grid[0].length;
+  const steps = firstRow.length;
   const tokens: string[] = [];
 
   for (let col = 0; col < steps; col += 1) {
     let token = "~";
     for (let row = 0; row < rows; row += 1) {
-      if (grid[row][col]) {
-        token = voices[row];
+      if (grid[row]?.[col]) {
+        const voiceName = voices[row];
+        token = typeof voiceName === "string" ? voiceName : "~";
         break;
       }
     }
@@ -107,23 +112,27 @@ export function PatternGrid({
               gap: "0.25rem",
             }}
           >
-            {grid[rowIndex].map((active, colIndex) => (
+            {(grid[rowIndex] ?? []).map((active, colIndex) => (
               <button
                 key={colIndex}
                 type="button"
                 onClick={() => {
                   if (!onChangeMini) return;
                   const next = grid.map((row) => [...row]);
+                  if (!next[rowIndex]) {
+                    return;
+                  }
 
                   if (active) {
                     // Turning off the currently active cell.
-                    next[rowIndex][colIndex] = false;
+                    next[rowIndex]![colIndex] = false;
                   } else {
                     // Ensure only one voice per step: clear column then activate.
                     for (let r = 0; r < next.length; r += 1) {
-                      next[r][colIndex] = false;
+                      if (!next[r]) continue;
+                      next[r]![colIndex] = false;
                     }
-                    next[rowIndex][colIndex] = true;
+                    next[rowIndex]![colIndex] = true;
                   }
 
                   const nextMini = gridToMini(next, voices);

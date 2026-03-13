@@ -1,3 +1,0 @@
-description: >
-  Generate deterministic Strudel source strings from AST.
-  Use canonical method order; escape strings properly.

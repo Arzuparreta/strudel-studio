@@ -26,5 +26,3 @@ apps/studio/dist
 apps/studio/node_modules
 packages/*/node_modules
 packages/*/dist
-
-docs

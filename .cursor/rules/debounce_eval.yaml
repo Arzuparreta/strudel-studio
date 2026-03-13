@@ -1,3 +1,0 @@
-description: >
-  All evaluation in the agent must be debounced according to config
-  (default 200ms) to prevent race conditions.

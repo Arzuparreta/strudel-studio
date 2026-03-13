@@ -1,3 +1,0 @@
-description: >
-  Generate minimal valid AST JSON fixtures for Strudel Studio.
-  Include 1–2 nodes per type. Must follow canonical method order.

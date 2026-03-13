@@ -1,2 +1,0 @@
-description: >
-  All nodes that require identity must have stable `id` across AST and graph.

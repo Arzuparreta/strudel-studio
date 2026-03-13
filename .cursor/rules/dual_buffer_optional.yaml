@@ -1,3 +1,0 @@
-description: >
-  Dual buffer evaluation may be used for cycle swaps, but not required
-  for initial AST/codegen testing.

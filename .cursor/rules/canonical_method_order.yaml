@@ -1,3 +1,0 @@
-description: >
-  AST → codegen must always follow the canonical method order defined
-  in architecture v2; no commutative swaps are allowed.

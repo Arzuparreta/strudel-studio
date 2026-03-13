@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden > base-note-only.json → snapshot 1`] = `"note("c2 eb2")"`;
+
+exports[`golden > base-s-only.json → snapshot 1`] = `"s("[bd ~]")"`;
+
+exports[`golden > canonical-order.json → snapshot 1`] = `"s("[bd ~] [sd ~]").bank("tr909").slow(2).gain(0.8)"`;
+
+exports[`golden > one-method.json → snapshot 1`] = `"s("[bd sd]").slow(2)"`;
+
+exports[`golden > string-escape.json → snapshot 1`] = `"s("say \\"hello\\"")"`;

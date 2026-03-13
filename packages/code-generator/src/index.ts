@@ -4,3 +4,4 @@
  */
 
 export { astVersion } from "@strudel-studio/pattern-ast";
+export { generate, escapeString, formatLiteral } from "./generate.js";

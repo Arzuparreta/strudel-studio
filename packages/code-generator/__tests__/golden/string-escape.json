@@ -1,0 +1,5 @@
+{
+  "id": "root",
+  "base": { "kind": "s", "mini": "say \"hello\"" },
+  "methods": []
+}

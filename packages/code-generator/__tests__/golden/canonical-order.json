@@ -1,0 +1,9 @@
+{
+  "id": "n_drums",
+  "base": { "kind": "s", "mini": "[bd ~] [sd ~]" },
+  "methods": [
+    { "id": "c1", "name": "slow", "args": [2] },
+    { "id": "c2", "name": "bank", "args": ["tr909"] },
+    { "id": "c3", "name": "gain", "args": [0.8] }
+  ]
+}

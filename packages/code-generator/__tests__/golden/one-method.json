@@ -1,0 +1,7 @@
+{
+  "id": "root",
+  "base": { "kind": "s", "mini": "[bd sd]" },
+  "methods": [
+    { "id": "m1", "name": "slow", "args": [2] }
+  ]
+}

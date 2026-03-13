@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { astVersion, EvalScheduler, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
-import { generate, generateDocument } from "@strudel-studio/code-generator";
-import type { TransformChain } from "@strudel-studio/pattern-ast";
+import { generateDocument } from "@strudel-studio/code-generator";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 import type { ParseResult } from "@strudel-studio/strudel-parser";
 import {
@@ -28,26 +27,6 @@ import { GraphCanvas } from "@strudel-studio/ui-components";
 import { HapList } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
-
-const demoAst: TransformChain = {
-  id: "demo-chain",
-  base: {
-    kind: "note",
-    mini: "c3 eb3",
-  },
-  methods: [
-    {
-      id: "m-synth",
-      name: "s",
-      args: ["sawtooth"],
-    },
-    {
-      id: "m-slow",
-      name: "slow",
-      args: [2],
-    },
-  ],
-};
 
 /** Demo multi-track graph (parallel root, two lanes) for Task 3.11. */
 const demoGraph: PatternGraph = {
@@ -88,8 +67,12 @@ const demoGraph: PatternGraph = {
 };
 
 export default function App() {
-  const [source, setSource] = useState<string>(() => generate(demoAst));
+  const [source, setSource] = useState<string>(() =>
+    generateDocument(graphToAst(demoGraph)),
+  );
   const [graph, setGraph] = useState<PatternGraph>(() => demoGraph);
+  const [sourceIsGraphProjection, setSourceIsGraphProjection] =
+    useState<boolean>(true);
   const [status, setStatus] = useState<string>("idle");
   const [parseInfo, setParseInfo] = useState<string>("not parsed yet");
   const [graphError, setGraphError] = useState<string | null>(null);
@@ -148,6 +131,8 @@ export default function App() {
           setParseInfo("parsed: supported subset AST");
         } else if (nextHasAst && nextHasOpaques) {
           setParseInfo("parsed: AST with opaque regions");
+        } else if (sourceIsGraphProjection && !nextHasAst && nextHasOpaques) {
+          setParseInfo("generated from graph (parser subset unavailable)");
         } else if (!nextHasAst && nextHasOpaques) {
           setParseInfo("parsed: opaque-only (unsupported or complex code)");
         } else {
@@ -165,13 +150,14 @@ export default function App() {
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [source]);
+  }, [source, sourceIsGraphProjection]);
 
-  useEffect(() => {
-    setSource(generate(demoAst));
-  }, []);
+  const canEditGraph = sourceIsGraphProjection || (hasSubsetAst && !hasOpaques);
 
-  const canEditGraph = hasSubsetAst && !hasOpaques;
+  function handleSourceChange(nextSource: string) {
+    setSourceIsGraphProjection(false);
+    setSource(nextSource);
+  }
 
   function updateSourceFromGraph(nextGraph: PatternGraph) {
     try {
@@ -180,6 +166,7 @@ export default function App() {
       const code = generateDocument(doc);
       setGraph(nextGraph);
       setSource(code);
+      setSourceIsGraphProjection(true);
       setGraphError(null);
     } catch (e) {
       const message =
@@ -346,7 +333,7 @@ export default function App() {
 
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Generated Strudel code</h2>
-        <MonacoEditor value={source} onChange={setSource} />
+        <MonacoEditor value={source} onChange={handleSourceChange} />
         <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
           <button type="button" onClick={handleEvaluate}>
             Generate &amp; Play

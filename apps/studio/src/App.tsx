@@ -511,6 +511,12 @@ export default function App() {
                 {from}–{to}
               </button>
             ))}
+            <span style={{ color: "#888", fontSize: "0.8rem" }}>
+              Showing {timelineWindow.from}–{timelineWindow.to}{" "}
+              {timelineWindow.from === 0 && timelineWindow.to === 1
+                ? "(from last play)"
+                : "(scrub)"}
+            </span>
           </div>
           <HapTimeline
             haps={haps}

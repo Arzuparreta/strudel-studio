@@ -297,6 +297,8 @@ Success criteria:
 
 * users see patterns evolve over time.
 
+**Status:** Done. v0.9.1: time-window selector (from/to + presets). v0.9.2: timeline scrubbing (one-shot throttled queryArc for non–0–1 windows) + inspector integration test.
+
 ---
 
 # v1.0 — Plugin System
@@ -408,7 +410,7 @@ Strudel runtime
   If `selectedTransformName` is changed while lanes already exist, `onAddTransform` affects only newly added transforms. In a later v0.6 design pass, decide whether mass-replacing transforms in existing lanes should be supported or explicitly avoided.
 
 - **Pattern inspector window**  
-  The current inspector uses a fixed hap window \([0, 1]\). Future milestones could expose a UI control for arbitrary inspection windows or scrubbing, while still reading from the shared hap cache.
+  Done (v0.9.1 / v0.9.2): UI control for time window (from/to + presets); other windows use one-shot throttled scrubbing (queryArc) while inspector still reads only from the shared hap cache.
 
 - **Multi-lane hap separation**  
   All haps are currently recorded into a single `HapCache`. For richer UX, consider per-lane or per-transform filtering in the inspector UI so overlapping events from multiple lanes can be distinguished.

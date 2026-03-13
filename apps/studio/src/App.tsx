@@ -20,7 +20,7 @@ import {
 } from "@strudel-studio/pattern-graph";
 import { updateLaneTransformArgs } from "@strudel-studio/pattern-graph";
 import {
-  TRANSFORM_REGISTRY,
+  getAvailableTransformNames,
   getTransformSpec,
   coerceTransformArgs,
 } from "@strudel-studio/plugins-sdk";
@@ -29,6 +29,9 @@ import { GraphCanvas } from "@strudel-studio/ui-components";
 import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
+
+// v1.0: load plugins so they register transforms and optional hooks.
+import "@strudel-studio/plugin-euclidean";
 
 /** Demo multi-track graph (parallel root, two lanes) for Task 3.11. */
 const demoGraph: PatternGraph = {
@@ -576,7 +579,7 @@ export default function App() {
               padding: "0.1rem 0.25rem",
             }}
           >
-            {Object.keys(TRANSFORM_REGISTRY).map((name) => (
+            {getAvailableTransformNames().map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
@@ -674,7 +677,7 @@ export default function App() {
                   );
                   updateSourceFromGraph(next);
                 },
-                availableTransforms: Object.keys(TRANSFORM_REGISTRY),
+                availableTransforms: getAvailableTransformNames(),
                 selectedTransformForLane: laneTransformSelections,
                 // Refinement 4: selector affects only NEW transforms. Changing the
                 // selection here only updates UI state; existing transforms in the

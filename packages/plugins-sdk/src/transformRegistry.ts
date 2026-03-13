@@ -100,8 +100,42 @@ export const TRANSFORM_REGISTRY: Record<string, TransformSpec> = {
   },
 };
 
+/** Plugin-registered transform specs (v1.0). Built-in registry takes precedence. */
+const pluginTransformSpecs = new Map<string, TransformSpec>();
+
+/**
+ * Register a transform spec from a plugin. Used by plugins to expose custom
+ * transforms in the editor (e.g. "+ Add transform" picker). Built-in names
+ * cannot be overridden.
+ * @see docs/project-roadmap.md v1.0 — Plugin System
+ */
+export function registerPluginTransform(spec: TransformSpec): void {
+  if (Object.hasOwn(TRANSFORM_REGISTRY, spec.name)) {
+    return; // do not override built-in
+  }
+  pluginTransformSpecs.set(spec.name, spec);
+}
+
+/**
+ * Get transform spec by name: built-in first, then plugin-registered.
+ */
 export function getTransformSpec(name: string): TransformSpec | undefined {
-  return TRANSFORM_REGISTRY[name];
+  return TRANSFORM_REGISTRY[name] ?? pluginTransformSpecs.get(name);
+}
+
+/**
+ * All transform names available in the editor (built-in + plugin), sorted.
+ * Use this for "+ Add transform" picker and per-lane selector.
+ */
+export function getAvailableTransformNames(): string[] {
+  const builtIn = Object.keys(TRANSFORM_REGISTRY);
+  const plugin = [...pluginTransformSpecs.keys()];
+  return [...new Set([...builtIn, ...plugin])].sort();
+}
+
+/** Clear plugin-registered transforms. For testing only. */
+export function _resetPluginTransformsForTesting(): void {
+  pluginTransformSpecs.clear();
 }
 
 /**

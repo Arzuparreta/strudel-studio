@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   TRANSFORM_REGISTRY,
   getTransformSpec,
+  getAvailableTransformNames,
+  registerPluginTransform,
   coerceTransformArgs,
+  _resetPluginTransformsForTesting,
   type TransformSpec,
 } from "./transformRegistry.js";
 import { parseTransformArgsString } from "./parseTransformArgs.js";
@@ -47,6 +50,41 @@ describe("transform registry", () => {
     expect(coerceTransformArgs(multiArgSpec, [2])).toEqual([2, "x"]);
     expect(coerceTransformArgs(multiArgSpec, [3, "y"])).toEqual([3, "y"]);
     expect(coerceTransformArgs(multiArgSpec, ["5", "z"])).toEqual([5, "z"]);
+  });
+
+  it("getAvailableTransformNames returns built-in + plugin (v1.0)", () => {
+    _resetPluginTransformsForTesting();
+    expect(getAvailableTransformNames()).toEqual([
+      "bank",
+      "delay",
+      "fast",
+      "gain",
+      "room",
+      "slow",
+    ]);
+    registerPluginTransform({
+      name: "euclidean",
+      defaultArgs: [3, 4],
+      description: "Euclidean rhythm",
+      args: [
+        { name: "hits", type: "number", default: 3 },
+        { name: "steps", type: "number", default: 4 },
+      ],
+    });
+    expect(getAvailableTransformNames()).toContain("euclidean");
+    expect(getTransformSpec("euclidean")?.defaultArgs).toEqual([3, 4]);
+    expect(getTransformSpec("slow")).toBeDefined(); // built-in unchanged
+    _resetPluginTransformsForTesting();
+  });
+
+  it("registerPluginTransform does not override built-in", () => {
+    registerPluginTransform({
+      name: "slow",
+      defaultArgs: [99],
+      description: "Override attempt",
+    });
+    expect(getTransformSpec("slow")?.defaultArgs).toEqual([2]);
+    _resetPluginTransformsForTesting();
   });
 
   it("parseTransformArgsString + coerce produces valid args (refinement 1)", () => {

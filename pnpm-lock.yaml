@@ -38,6 +38,9 @@ importers:
       '@strudel-studio/pattern-inspector':
         specifier: workspace:*
         version: link:../../packages/pattern-inspector
+      '@strudel-studio/plugin-euclidean':
+        specifier: workspace:*
+        version: link:../../plugins/euclidean
       '@strudel-studio/plugins-sdk':
         specifier: workspace:*
         version: link:../../packages/plugins-sdk

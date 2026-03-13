@@ -20,3 +20,10 @@ export {
   canonicalIndexOf,
   type CanonicalMethodNameV1,
 } from "./canonicalOrder.js";
+
+export {
+  type OpaqueEmitMode,
+  type SourceRange,
+  type OpaqueParentComposition,
+  type OpaqueNode,
+} from "./opaque.js";

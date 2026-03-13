@@ -22,7 +22,9 @@ export { parseTransformArgsString } from "./parseTransformArgs.js";
 export {
   registerPluginNodeCompiler,
   createPluginNodeCompiler,
+  getRegisteredPluginNodeKinds,
 } from "./pluginNodeCompiler.js";
+export type { PluginNode } from "@strudel-studio/pattern-graph";
 export {
   registerPluginPanel,
   getPluginPanels,

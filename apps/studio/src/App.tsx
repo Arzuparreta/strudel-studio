@@ -9,6 +9,8 @@ import {
   astToGraph,
   addLane,
   deleteLane,
+  addPluginNode,
+  deletePluginNode,
   renameLane,
   reorderParallelLanes,
   reorderSerialChildren,
@@ -30,6 +32,7 @@ import {
   getPlugin,
   createPluginNodeCompiler,
   getPluginPanels,
+  getRegisteredPluginNodeKinds,
 } from "@strudel-studio/plugins-sdk";
 import {
   LaneStack,
@@ -1309,9 +1312,9 @@ export default function App() {
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Composition graph</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
-          Visualization of the PatternGraph: parallel/serial root and lane
-          children. Select a lane to rename or delete it; drag lane cards to
-          reorder, or use Move up/down.
+          Visualization of the PatternGraph: parallel/serial root with lanes and
+          plugin nodes. Select a lane to rename or delete it; drag cards to
+          reorder. Add plugin nodes from the dropdown when any plugin registers a node kind.
         </p>
         <div
           style={{
@@ -1368,6 +1371,33 @@ export default function App() {
           >
             Delete selected lane
           </button>
+          {getRegisteredPluginNodeKinds().length > 0 && (
+            <select
+              aria-label="Add plugin node"
+              value=""
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v || !canEditGraph) return;
+                const [pluginId, nodeKind] = v.split(":");
+                if (!pluginId || !nodeKind) return;
+                const { graph: next, nodeId } = addPluginNode(graph, {
+                  pluginId,
+                  nodeKind,
+                });
+                setSelectedGraphNodeId(nodeId);
+                updateSourceFromGraph(next, mutedLanes);
+                e.target.value = "";
+              }}
+              style={{ padding: "0.25rem 0.5rem", fontSize: "0.9rem" }}
+            >
+              <option value="">Add plugin node…</option>
+              {getRegisteredPluginNodeKinds().map(({ pluginId, nodeKind }) => (
+                <option key={`${pluginId}:${nodeKind}`} value={`${pluginId}:${nodeKind}`}>
+                  {pluginId} / {nodeKind}
+                </option>
+              ))}
+            </select>
+          )}
           {(() => {
             const selectedLane =
               selectedGraphNodeId != null
@@ -1554,6 +1584,15 @@ export default function App() {
                   const entry = patternLibrary.find((e) => e.id === libraryEntryId);
                   if (!entry) return;
                   const next = replaceLaneContent(graph, laneId, entry.content);
+                  updateSourceFromGraph(next, mutedLanes);
+                }
+              : undefined
+          }
+          onDeletePluginNode={
+            canEditGraph
+              ? (nodeId) => {
+                  const next = deletePluginNode(graph, nodeId);
+                  if (selectedGraphNodeId === nodeId) setSelectedGraphNodeId(null);
                   updateSourceFromGraph(next, mutedLanes);
                 }
               : undefined

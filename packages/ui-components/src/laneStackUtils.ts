@@ -66,6 +66,11 @@ export function getNodeLabel(graph: PatternGraph, nodeId: string): string {
     return `opaque: ${(node as { rawCode: string }).rawCode.slice(0, 20)}…`;
   }
 
+  if (node.type === "plugin") {
+    const plugin = node as { pluginId: string; nodeKind: string };
+    return `${plugin.pluginId}/${plugin.nodeKind}`;
+  }
+
   return node.id;
 }
 

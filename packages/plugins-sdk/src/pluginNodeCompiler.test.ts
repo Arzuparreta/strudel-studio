@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   registerPluginNodeCompiler,
   createPluginNodeCompiler,
+  getRegisteredPluginNodeKinds,
   _resetPluginNodeCompilersForTesting,
 } from "./pluginNodeCompiler.js";
 
@@ -31,6 +32,18 @@ describe("plugin node compiler", () => {
       base: { kind: "s", mini: "[bd*3 bd]" },
       methods: [],
     });
+  });
+
+  it("getRegisteredPluginNodeKinds returns registered pluginId/nodeKind pairs", () => {
+    expect(getRegisteredPluginNodeKinds()).toEqual([]);
+    registerPluginNodeCompiler("euclidean", "euclideanPattern", (node) => ({
+      id: node.id,
+      base: { kind: "s", mini: "[bd ~]" },
+      methods: [],
+    }));
+    expect(getRegisteredPluginNodeKinds()).toEqual([
+      { pluginId: "euclidean", nodeKind: "euclideanPattern" },
+    ]);
   });
 
   it("throws when no compiler is registered for plugin/nodeKind", () => {

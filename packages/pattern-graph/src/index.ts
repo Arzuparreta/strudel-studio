@@ -28,6 +28,8 @@ export { astToGraph } from "./compile/astToGraph.js";
 export {
   addLane,
   deleteLane,
+  addPluginNode,
+  deletePluginNode,
   renameLane,
   reorderParallelLanes,
   reorderSerialChildren,

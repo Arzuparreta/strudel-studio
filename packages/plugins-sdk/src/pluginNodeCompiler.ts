@@ -41,6 +41,21 @@ export function createPluginNodeCompiler(): (node: PluginNode) => PatternDoc {
   };
 }
 
+/**
+ * List all registered (pluginId, nodeKind) pairs for UI (e.g. "Add plugin node").
+ * @see docs/project-roadmap.md v1.0 follow-on — UI to create plugin nodes
+ */
+export function getRegisteredPluginNodeKinds(): { pluginId: string; nodeKind: string }[] {
+  const list = Array.from(compilers.keys()).map((k) => {
+    const idx = k.indexOf(":");
+    const pluginId = idx >= 0 ? k.slice(0, idx) : k;
+    const nodeKind = idx >= 0 ? k.slice(idx + 1) : "";
+    return { pluginId, nodeKind };
+  });
+  list.sort((a, b) => a.pluginId.localeCompare(b.pluginId) || a.nodeKind.localeCompare(b.nodeKind));
+  return list;
+}
+
 /** Clear all registered compilers. For testing only. */
 export function _resetPluginNodeCompilersForTesting(): void {
   compilers.clear();

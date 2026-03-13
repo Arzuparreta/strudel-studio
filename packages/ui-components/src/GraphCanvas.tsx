@@ -14,6 +14,8 @@ export interface GraphCanvasProps {
   onReorderLanes?: (newOrder: string[]) => void;
   /** When provided, lane cards accept drop of a library pattern; called with (laneId, libraryEntryId). */
   onDropLibraryPattern?: (laneId: string, libraryEntryId: string) => void;
+  /** When provided, plugin node cards show a remove control; called with nodeId. */
+  onDeletePluginNode?: (nodeId: string) => void;
 }
 
 function isCompositionRoot(
@@ -29,6 +31,7 @@ export function GraphCanvas({
   onSelectNode,
   onReorderLanes,
   onDropLibraryPattern,
+  onDeletePluginNode,
 }: GraphCanvasProps) {
   const [isDragging, setIsDragging] = useState(false);
   const nodesById = new Map<string, GraphNode>(
@@ -70,7 +73,7 @@ export function GraphCanvas({
     );
   }
 
-  const laneIds = root.order ?? [];
+  const childIds = root.order ?? [];
 
   return (
     <div className={className}>
@@ -111,7 +114,7 @@ export function GraphCanvas({
           {getNodeLabel(graph, root.id)}
         </div>
 
-        {laneIds.length > 0 && (
+        {childIds.length > 0 && (
           <svg
             width="100%"
             height="14"
@@ -138,33 +141,111 @@ export function GraphCanvas({
             flexWrap: "wrap",
           }}
         >
-          {laneIds.length === 0 ? (
+          {childIds.length === 0 ? (
             <p style={{ fontSize: "0.85rem", color: "#777" }}>
-              No lanes attached to the {root.type} root.
+              No lanes or plugin nodes. Add a lane or plugin node below.
             </p>
           ) : (
-            laneIds.map((laneId, idx) => {
-              const laneNode = nodesById.get(laneId);
-              if (!laneNode || laneNode.type !== "lane") {
-                return null;
-              }
-              const chainNode = nodesById.get(laneNode.head);
+            childIds.map((childId, idx) => {
+              const node = nodesById.get(childId);
+              if (!node) return null;
 
-              const isSelected = selectedNodeId === laneId;
-              const canDrag =
-                !!onReorderLanes && laneIds.length > 1;
+              if (node.type === "plugin") {
+                const isSelected = selectedNodeId === childId;
+                const canDrag = !!onReorderLanes && childIds.length > 1;
+                const label = getNodeLabel(graph, childId);
+                return (
+                  <div
+                    key={childId}
+                    role={onSelectNode ? "button" : undefined}
+                    aria-label={`Plugin node ${label}`}
+                    tabIndex={onSelectNode ? 0 : undefined}
+                    draggable={canDrag}
+                    onDragStart={(e) => {
+                      if (!onReorderLanes) return;
+                      setIsDragging(true);
+                      e.dataTransfer.setData("text/plain", childId);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragEnd={() => setIsDragging(false)}
+                    onDragOver={(e) => {
+                      if (onReorderLanes) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      if (!onReorderLanes) return;
+                      const draggedId = e.dataTransfer.getData("text/plain");
+                      const fromIndex = childIds.indexOf(draggedId);
+                      if (fromIndex === -1 || fromIndex === idx) return;
+                      const newOrder = [...childIds];
+                      const [removed] = newOrder.splice(fromIndex, 1);
+                      newOrder.splice(idx, 0, removed!);
+                      onReorderLanes(newOrder);
+                    }}
+                    style={{
+                      minWidth: "10rem",
+                      maxWidth: "14rem",
+                      padding: "0.5rem 0.75rem",
+                      borderRadius: "6px",
+                      border: isSelected ? "1px solid #007acc" : "1px solid #ccc",
+                      backgroundColor: "#e8f4e8",
+                      boxShadow: isSelected ? "0 0 0 2px rgba(0,122,204,0.15)" : "0 1px 2px rgba(0,0,0,0.04)",
+                      fontFamily: "monospace",
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                      cursor: canDrag ? (isDragging ? "grabbing" : "grab") : undefined,
+                    }}
+                    onClick={() => onSelectNode?.(childId)}
+                    onKeyDown={(e) => {
+                      if (onSelectNode && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        onSelectNode(childId);
+                      }
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontWeight: 600 }}>{label}</span>
+                      {onDeletePluginNode && (
+                        <button
+                          type="button"
+                          aria-label={`Remove plugin node ${childId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeletePluginNode(childId);
+                          }}
+                          style={{ fontSize: "0.75rem", padding: "0.1rem 0.35rem" }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (node.type !== "lane") return null;
+              const laneNode = node;
+              const chainNode = nodesById.get(laneNode.head);
+              const isSelected = selectedNodeId === childId;
+              const canDrag = !!onReorderLanes && childIds.length > 1;
 
               return (
                 <div
-                  key={laneId}
+                  key={childId}
                   role={onSelectNode ? "button" : undefined}
-                  aria-label={`Lane ${laneId}${chainNode && chainNode.type === "transformChain" ? `: ${chainNode.base.kind}("${chainNode.base.miniSerialization}")` : ""}`}
+                  aria-label={`Lane ${childId}${chainNode?.type === "transformChain" ? `: ${chainNode.base.kind}("${chainNode.base.miniSerialization}")` : ""}`}
                   tabIndex={onSelectNode ? 0 : undefined}
                   draggable={canDrag}
                   onDragStart={(e) => {
                     if (!onReorderLanes) return;
                     setIsDragging(true);
-                    e.dataTransfer.setData("text/plain", laneId);
+                    e.dataTransfer.setData("text/plain", childId);
                     e.dataTransfer.effectAllowed = "move";
                   }}
                   onDragEnd={() => setIsDragging(false)}
@@ -185,14 +266,14 @@ export function GraphCanvas({
                     setIsDragging(false);
                     if (e.dataTransfer.types.includes(LIBRARY_PATTERN_DRAG_TYPE) && onDropLibraryPattern) {
                       const id = e.dataTransfer.getData(LIBRARY_PATTERN_DRAG_TYPE);
-                      if (id) onDropLibraryPattern(laneId, id);
+                      if (id) onDropLibraryPattern(childId, id);
                       return;
                     }
                     if (!onReorderLanes) return;
                     const draggedId = e.dataTransfer.getData("text/plain");
-                    const fromIndex = laneIds.indexOf(draggedId);
+                    const fromIndex = childIds.indexOf(draggedId);
                     if (fromIndex === -1 || fromIndex === idx) return;
-                    const newOrder = [...laneIds];
+                    const newOrder = [...childIds];
                     const [removed] = newOrder.splice(fromIndex, 1);
                     newOrder.splice(idx, 0, removed!);
                     onReorderLanes(newOrder);
@@ -202,13 +283,9 @@ export function GraphCanvas({
                     maxWidth: "14rem",
                     padding: "0.5rem 0.75rem",
                     borderRadius: "6px",
-                    border: isSelected
-                      ? "1px solid #007acc"
-                      : "1px solid #ccc",
+                    border: isSelected ? "1px solid #007acc" : "1px solid #ccc",
                     backgroundColor: "#fff",
-                    boxShadow: isSelected
-                      ? "0 0 0 2px rgba(0,122,204,0.15)"
-                      : "0 1px 2px rgba(0,0,0,0.04)",
+                    boxShadow: isSelected ? "0 0 0 2px rgba(0,122,204,0.15)" : "0 1px 2px rgba(0,0,0,0.04)",
                     fontFamily: "monospace",
                     fontSize: "0.8rem",
                     display: "flex",
@@ -216,50 +293,25 @@ export function GraphCanvas({
                     gap: "0.25rem",
                     cursor: canDrag ? (isDragging ? "grabbing" : "grab") : undefined,
                   }}
-                  onClick={() => {
-                    if (onSelectNode) {
-                      onSelectNode(laneId);
-                    }
-                  }}
+                  onClick={() => onSelectNode?.(childId)}
                   onKeyDown={(e) => {
                     if (onSelectNode && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      onSelectNode(laneId);
+                      onSelectNode(childId);
                     }
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontWeight: 600,
-                      }}
-                    >
-                      {laneId}
-                    </span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{ fontWeight: 600 }}>{childId}</span>
                     {typeof (laneNode as any).cycleHint === "number" && (
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          color: "#555",
-                        }}
-                      >
+                      <span style={{ fontSize: "0.7rem", color: "#555" }}>
                         cycle={String((laneNode as any).cycleHint)}
                       </span>
                     )}
                   </div>
                   <div>
-                    {chainNode && chainNode.type === "transformChain" ? (
-                      <code>
-                        {chainNode.base.kind}("
-                        {chainNode.base.miniSerialization}")
-                      </code>
+                    {chainNode?.type === "transformChain" ? (
+                      <code>{`${chainNode.base.kind}("${chainNode.base.miniSerialization}")`}</code>
                     ) : (
                       <span style={{ color: "#888" }}>(no transform chain)</span>
                     )}

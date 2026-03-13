@@ -4,6 +4,7 @@ import type {
   LaneNode,
   TransformChainNode,
   CompositionNode,
+  PluginNode,
 } from "./schema.js";
 
 type LaneId = string;
@@ -264,6 +265,74 @@ export function reorderSerialChildren(
   const updatedRoot: CompositionNode = {
     ...root,
     order: [...newOrder],
+  };
+  const rootIndex = cloned.nodes.findIndex((n) => n.id === root.id);
+  cloned.nodes = [
+    ...cloned.nodes.slice(0, rootIndex),
+    updatedRoot,
+    ...cloned.nodes.slice(rootIndex + 1),
+  ];
+  return cloned;
+}
+
+/**
+ * Add a plugin node as a child of the composition root (v1.0 follow-on).
+ * Appends the new node id to root.order.
+ */
+export function addPluginNode(
+  graph: PatternGraph,
+  options: { pluginId: string; nodeKind: string; payload?: unknown },
+): { graph: PatternGraph; nodeId: string } {
+  const cloned = cloneGraph(graph);
+  const ids = collectIds(cloned);
+  const root = getCompositionRoot(cloned);
+
+  const nodeId = nextId("plugin_", ids);
+
+  const pluginNode: PluginNode = {
+    id: nodeId,
+    type: "plugin",
+    pluginId: options.pluginId,
+    nodeKind: options.nodeKind,
+    payload: options.payload,
+  };
+
+  cloned.nodes = [...cloned.nodes, pluginNode];
+  const updatedRoot: CompositionNode = {
+    ...root,
+    order: root.order ? [...root.order, nodeId] : [nodeId],
+  };
+  const rootIndex = cloned.nodes.findIndex((n) => n.id === root.id);
+  cloned.nodes = [
+    ...cloned.nodes.slice(0, rootIndex),
+    updatedRoot,
+    ...cloned.nodes.slice(rootIndex + 1),
+  ];
+  return { graph: cloned, nodeId };
+}
+
+/**
+ * Remove a plugin node from the graph and from the composition root order.
+ * Throws if the node is not a plugin node or is not a direct child of the root.
+ */
+export function deletePluginNode(
+  graph: PatternGraph,
+  nodeId: string,
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const root = getCompositionRoot(cloned);
+  const node = findNode(cloned, nodeId);
+  if (node.type !== "plugin") {
+    throw new Error(`PatternGraph: deletePluginNode expected plugin node, got ${node.type}`);
+  }
+  const order = root.order ?? [];
+  if (!order.includes(nodeId)) {
+    throw new Error(`PatternGraph: deletePluginNode node ${nodeId} is not in root order`);
+  }
+  cloned.nodes = cloned.nodes.filter((n) => n.id !== nodeId);
+  const updatedRoot: CompositionNode = {
+    ...root,
+    order: order.filter((id) => id !== nodeId),
   };
   const rootIndex = cloned.nodes.findIndex((n) => n.id === root.id);
   cloned.nodes = [

@@ -3,6 +3,8 @@ import type { PatternGraph } from "./schema.js";
 import {
   addLane,
   deleteLane,
+  addPluginNode,
+  deletePluginNode,
   renameLane,
   reorderParallelLanes,
   reorderSerialChildren,
@@ -46,6 +48,32 @@ describe("PatternGraph lane mutations", () => {
 
     // validate should succeed
     expect(() => validatePatternGraph(graph)).not.toThrow();
+  });
+
+  it("addPluginNode creates a plugin node and appends to root order", () => {
+    const { graph, nodeId } = addPluginNode(baseGraph, {
+      pluginId: "euclidean",
+      nodeKind: "euclideanPattern",
+      payload: { hits: 3, steps: 4 },
+    });
+    const node = graph.nodes.find((n) => n.id === nodeId);
+    expect(node && node.type).toBe("plugin");
+    expect((node as { pluginId: string }).pluginId).toBe("euclidean");
+    const root = graph.nodes.find((n) => n.id === graph.root) as { order?: string[] };
+    expect(root.order).toContain(nodeId);
+    expect(() => validatePatternGraph(graph)).not.toThrow();
+  });
+
+  it("deletePluginNode removes plugin node and updates root order", () => {
+    const { graph: withPlugin, nodeId } = addPluginNode(baseGraph, {
+      pluginId: "euclidean",
+      nodeKind: "euclideanPattern",
+    });
+    const after = deletePluginNode(withPlugin, nodeId);
+    expect(after.nodes.some((n) => n.id === nodeId)).toBe(false);
+    const root = after.nodes.find((n) => n.id === after.root) as { order?: string[] };
+    expect(root.order).not.toContain(nodeId);
+    expect(() => validatePatternGraph(after)).not.toThrow();
   });
 
   it("deleteLane removes lane and its chain and updates root order", () => {

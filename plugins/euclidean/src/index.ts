@@ -1,9 +1,12 @@
 import { createElement } from "react";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
+import type { PatternDoc } from "@strudel-studio/pattern-ast";
 import {
   registerPluginFromManifest,
   registerPluginTransform,
   registerPluginPanel,
+  registerPluginNodeCompiler,
+  type PluginNode,
 } from "@strudel-studio/plugins-sdk";
 import manifest from "../manifest.json";
 
@@ -36,6 +39,19 @@ registerPluginTransform({
     { name: "hits", type: "number", default: 3 },
     { name: "steps", type: "number", default: 4 },
   ],
+});
+
+// v1.0 follow-on: plugin graph node — add "Euclidean pattern" in composition.
+const EUCLIDEAN_NODE_KIND = "euclideanPattern";
+registerPluginNodeCompiler(PLUGIN_ID, EUCLIDEAN_NODE_KIND, (node: PluginNode): PatternDoc => {
+  const hits = (node.payload as { hits?: number })?.hits ?? 3;
+  const steps = (node.payload as { steps?: number })?.steps ?? 4;
+  const mini = steps > 0 && hits > 0 ? `[bd*${hits} bd]` : "[bd ~]";
+  return {
+    id: node.id,
+    base: { kind: "s" as const, mini },
+    methods: [{ id: "m1", name: "slow", args: [2] }],
+  };
 });
 
 // v1.0: custom visual editor — panel in the Plugins section.

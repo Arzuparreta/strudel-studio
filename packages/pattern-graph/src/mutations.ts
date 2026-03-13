@@ -176,6 +176,46 @@ export function deleteLane(
 }
 
 /**
+ * Reorder lanes under the parallel root. newOrder must be a permutation of
+ * the current root.order (same ids, any order). Throws if root is not parallel
+ * or newOrder is invalid.
+ */
+export function reorderParallelLanes(
+  graph: PatternGraph,
+  newOrder: string[],
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const root = getRootComposition(cloned);
+  const current = root.order ?? [];
+
+  if (newOrder.length !== current.length) {
+    throw new Error(
+      "PatternGraph: reorderParallelLanes newOrder length must match root.order",
+    );
+  }
+  const currentSet = new Set(current);
+  for (const id of newOrder) {
+    if (!currentSet.has(id)) {
+      throw new Error(
+        `PatternGraph: reorderParallelLanes unknown or duplicate id: ${id}`,
+      );
+    }
+  }
+
+  const updatedRoot: CompositionNode = {
+    ...root,
+    order: [...newOrder],
+  };
+  const rootIndex = cloned.nodes.findIndex((n) => n.id === root.id);
+  cloned.nodes = [
+    ...cloned.nodes.slice(0, rootIndex),
+    updatedRoot,
+    ...cloned.nodes.slice(rootIndex + 1),
+  ];
+  return cloned;
+}
+
+/**
  * Rename a lane by updating its optional display name.
  * Lane ids remain stable; only the name hint used by UIs changes.
  */

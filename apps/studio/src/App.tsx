@@ -9,6 +9,7 @@ import {
   addLane,
   deleteLane,
   renameLane,
+  reorderParallelLanes,
   changeLaneBasePattern,
   addTransformToLane,
   setLaneCycleHint,
@@ -596,6 +597,59 @@ export default function App() {
           >
             Delete selected lane
           </button>
+          {(() => {
+            const root = graph.nodes.find((n) => n.id === graph.root);
+            const order =
+              root && root.type === "parallel" && (root as { order?: string[] }).order
+                ? (root as { order: string[] }).order
+                : [];
+            const idx =
+              selectedGraphNodeId != null
+                ? order.indexOf(selectedGraphNodeId)
+                : -1;
+            const isLaneSelected =
+              idx >= 0 &&
+              graph.nodes.some(
+                (n) => n.id === selectedGraphNodeId && n.type === "lane",
+              );
+            const canMoveUp = canEditGraph && isLaneSelected && idx > 0;
+            const canMoveDown =
+              canEditGraph && isLaneSelected && idx >= 0 && idx < order.length - 1;
+            return (
+              <>
+                <button
+                  type="button"
+                  disabled={!canMoveUp}
+                  onClick={() => {
+                    if (!canMoveUp || idx <= 0) return;
+                    const newOrder = [...order];
+                    const tmp = newOrder[idx - 1]!;
+                    newOrder[idx - 1] = newOrder[idx]!;
+                    newOrder[idx] = tmp;
+                    const next = reorderParallelLanes(graph, newOrder);
+                    updateSourceFromGraph(next);
+                  }}
+                >
+                  Move lane up
+                </button>
+                <button
+                  type="button"
+                  disabled={!canMoveDown}
+                  onClick={() => {
+                    if (!canMoveDown || idx < 0 || idx >= order.length - 1) return;
+                    const newOrder = [...order];
+                    const tmp = newOrder[idx + 1]!;
+                    newOrder[idx + 1] = newOrder[idx]!;
+                    newOrder[idx] = tmp;
+                    const next = reorderParallelLanes(graph, newOrder);
+                    updateSourceFromGraph(next);
+                  }}
+                >
+                  Move lane down
+                </button>
+              </>
+            );
+          })()}
           {!canEditGraph && (
             <span style={{ fontSize: "0.8rem", color: "#777" }}>
               Editing is disabled while the document contains opaque regions or

@@ -4,6 +4,7 @@ import {
   addLane,
   deleteLane,
   renameLane,
+  reorderParallelLanes,
   setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
@@ -54,6 +55,28 @@ describe("PatternGraph lane mutations", () => {
 
     const afterDelete = deleteLane(withLane, laneId);
     expect(afterDelete.nodes.find((n) => n.id === laneId)).toBeUndefined();
+  });
+
+  it("reorderParallelLanes updates root order", () => {
+    const { graph: g1, laneId: id1 } = addLane(baseGraph, {
+      basePatternMini: "bd",
+    });
+    const { graph: g2, laneId: id2 } = addLane(g1, { basePatternMini: "sd" });
+    const rootBefore = g2.nodes.find((n) => n.id === g2.root) as {
+      id: string;
+      type: string;
+      order: string[];
+    };
+    expect(rootBefore.order).toEqual([id1, id2]);
+
+    const reordered = reorderParallelLanes(g2, [id2, id1]);
+    const rootAfter = reordered.nodes.find((n) => n.id === reordered.root) as {
+      id: string;
+      type: string;
+      order: string[];
+    };
+    expect(rootAfter.order).toEqual([id2, id1]);
+    expect(() => validatePatternGraph(reordered)).not.toThrow();
   });
 
   it("renameLane updates the lane name hint", () => {

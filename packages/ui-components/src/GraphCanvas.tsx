@@ -8,6 +8,12 @@ export interface GraphCanvasProps {
   onSelectNode?: (nodeId: string) => void;
 }
 
+function isCompositionRoot(
+  node: GraphNode,
+): node is GraphNode & { type: "parallel" | "serial"; order?: string[] } {
+  return node.type === "parallel" || node.type === "serial";
+}
+
 export function GraphCanvas({
   graph,
   className,
@@ -30,11 +36,11 @@ export function GraphCanvas({
     );
   }
 
-  if (root.type !== "parallel") {
+  if (!isCompositionRoot(root)) {
     return (
       <div className={className}>
         <p style={{ fontSize: "0.85rem", color: "#777" }}>
-          Composition graph view currently supports a parallel root only.
+          Composition graph view supports parallel or serial root only.
         </p>
         <div
           style={{
@@ -61,12 +67,12 @@ export function GraphCanvas({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "0.75rem",
+          gap: "0",
+          alignItems: "center",
         }}
       >
         <div
           style={{
-            alignSelf: "center",
             padding: "0.3rem 0.6rem",
             borderRadius: "999px",
             border:
@@ -85,6 +91,18 @@ export function GraphCanvas({
           {getNodeLabel(graph, root.id)}
         </div>
 
+        {laneIds.length > 0 && (
+          <div
+            style={{
+              width: "2px",
+              minHeight: "12px",
+              backgroundColor: "#bbb",
+              flexShrink: 0,
+            }}
+            aria-hidden
+          />
+        )}
+
         <div
           style={{
             display: "flex",
@@ -96,7 +114,7 @@ export function GraphCanvas({
         >
           {laneIds.length === 0 ? (
             <p style={{ fontSize: "0.85rem", color: "#777" }}>
-              No lanes attached to the parallel root.
+              No lanes attached to the {root.type} root.
             </p>
           ) : (
             laneIds.map((laneId) => {

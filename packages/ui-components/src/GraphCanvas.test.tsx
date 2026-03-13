@@ -90,5 +90,37 @@ describe("GraphCanvas", () => {
 
     expect(calls).toEqual(["lane_drums"]);
   });
+
+  it("renders serial root and its lanes", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_serial",
+      nodes: [
+        {
+          id: "root_serial",
+          type: "serial",
+          order: ["lane_a"],
+        },
+        {
+          id: "lane_a",
+          type: "lane",
+          head: "chain_a",
+        },
+        {
+          id: "chain_a",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const { getByText } = render(<GraphCanvas graph={graph} />);
+
+    expect(getByText(/serial/i)).toBeTruthy();
+    expect(getByText("lane_a")).toBeTruthy();
+  });
 });
 

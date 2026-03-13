@@ -50,7 +50,12 @@ export function getNodeLabel(graph: PatternGraph, nodeId: string): string {
     const lane = node as LaneNode;
     const headLabel = getNodeLabel(graph, lane.head);
     const hint = typeof lane.cycleHint === "number" ? ` ×${lane.cycleHint}` : "";
-    return `${lane.id}${hint}: ${headLabel}`;
+    const displayName =
+      // @ts-expect-error - name is an optional UI-only field on LaneNode
+      (lane as any).name && typeof (lane as any).name === "string"
+        ? (lane as any).name
+        : lane.id;
+    return `${displayName}${hint}: ${headLabel}`;
   }
 
   if (node.type === "parallel" || node.type === "serial") {

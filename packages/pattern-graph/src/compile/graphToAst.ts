@@ -1,11 +1,4 @@
-import {
-  astVersion,
-  canonicalIndexOf,
-  type Literal,
-  type TransformChain,
-  type PatternDoc,
-  type CompositePattern,
-} from "@strudel-studio/pattern-ast";
+import { type Literal, type TransformChain, type PatternDoc, type CompositePattern } from "@strudel-studio/pattern-ast";
 import type {
   PatternGraph,
   GraphNode,
@@ -65,19 +58,14 @@ function compileTransformChainNode(
     }
   }
 
-  const sortedMethods = methods.sort(
-    (a, b) =>
-      canonicalIndexOf(astVersion, a.name) -
-      canonicalIndexOf(astVersion, b.name),
-  );
-
   return {
     id: node.id,
     base: {
       kind: baseKind,
       mini: baseMini,
     },
-    methods: sortedMethods.map((m) => ({
+    // Transform order is user-defined and must be preserved as-is.
+    methods: methods.map((m) => ({
       id: m.id,
       name: m.name,
       args: m.args as Literal[],

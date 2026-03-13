@@ -30,7 +30,8 @@ describe("generate", () => {
         { id: "m2", name: "bank", args: ["tr909"] },
       ],
     };
-    expect(generate(ast)).toBe('s("[bd ~]").bank("tr909").slow(2)');
+    // Transform order is user-defined and must be preserved as provided.
+    expect(generate(ast)).toBe('s("[bd ~]").slow(2).bank("tr909")');
   });
 
   it("escapes quotes and backslashes in mini string", () => {

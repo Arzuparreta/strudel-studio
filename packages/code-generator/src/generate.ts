@@ -9,7 +9,6 @@ import type {
   CompositePattern,
   PatternDoc,
 } from "@strudel-studio/pattern-ast";
-import { astVersion, canonicalIndexOf } from "@strudel-studio/pattern-ast";
 
 function isComposite(doc: PatternDoc): doc is CompositePattern {
   return "call" in doc && "children" in doc;
@@ -31,16 +30,6 @@ export function formatLiteral(value: Literal): string {
   return String(value);
 }
 
-/** Emit methods in canonical order; unknown methods after known. */
-function sortMethodsByCanonicalOrder(
-  chain: TransformChain
-): TransformChain["methods"] {
-  const version = astVersion;
-  return [...chain.methods].sort(
-    (a, b) => canonicalIndexOf(version, a.name) - canonicalIndexOf(version, b.name)
-  );
-}
-
 /**
  * Generate Strudel source from a single-spine TransformChain.
  * Emits base call then methods in canonical order.
@@ -51,12 +40,13 @@ export function generate(ast: TransformChain): string {
   const head =
     base.kind === "s" ? `s(${mini})` : `note(${mini})`;
 
-  const sorted = sortMethodsByCanonicalOrder(ast);
-  if (sorted.length === 0) {
+  const methods = ast.methods;
+  if (methods.length === 0) {
     return head;
   }
 
-  const parts = sorted.map(
+  // Transform order is user-defined and must be preserved as-is.
+  const parts = methods.map(
     (call) =>
       `.${call.name}(${call.args.map(formatLiteral).join(", ")})`
   );

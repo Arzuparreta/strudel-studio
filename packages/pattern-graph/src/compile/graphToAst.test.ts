@@ -29,7 +29,8 @@ describe("graphToAst", () => {
 
     expect(ast.base.kind).toBe("s");
     expect(ast.base.mini).toBe("bd buddy");
-    expect(ast.methods.map((m) => m.name)).toEqual(["bank", "slow"]);
+    // Transform order must be preserved as defined in the graph.
+    expect(ast.methods.map((m) => m.name)).toEqual(["slow", "bank"]);
   });
 
   it("compiles a lane root graph and applies cycleHint as a slow transform when no explicit slow is present", () => {

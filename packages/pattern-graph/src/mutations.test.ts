@@ -1,0 +1,143 @@
+import { describe, it, expect } from "vitest";
+import type { PatternGraph } from "./schema.js";
+import {
+  addLane,
+  deleteLane,
+  renameLane,
+  changeLaneBasePattern,
+  addTransformToLane,
+  removeTransformFromLane,
+  reorderLaneTransforms,
+  validatePatternGraph,
+} from "./mutations.js";
+
+const baseGraph: PatternGraph = {
+  graphVersion: 2,
+  astVersion: 1,
+  root: "root_parallel",
+  nodes: [
+    {
+      id: "root_parallel",
+      type: "parallel",
+      order: [],
+    },
+  ],
+  edges: [],
+};
+
+describe("PatternGraph lane mutations", () => {
+  it("addLane creates a lane and chain and attaches to root order", () => {
+    const { graph, laneId } = addLane(baseGraph, {
+      basePatternMini: "bd ~ sd ~",
+      name: "Drums",
+    });
+
+    const lane = graph.nodes.find((n) => n.id === laneId);
+    expect(lane && lane.type).toBe("lane");
+
+    const root = graph.nodes.find((n) => n.id === graph.root);
+    expect(root && root.type).toBe("parallel");
+    expect((root as { order?: string[] }).order).toContain(laneId);
+
+    // validate should succeed
+    expect(() => validatePatternGraph(graph)).not.toThrow();
+  });
+
+  it("deleteLane removes lane and its chain and updates root order", () => {
+    const { graph: withLane, laneId } = addLane(baseGraph, {
+      basePatternMini: "bd ~ sd ~",
+    });
+    const lane = withLane.nodes.find((n) => n.id === laneId && n.type === "lane");
+    expect(lane).toBeDefined();
+
+    const afterDelete = deleteLane(withLane, laneId);
+    expect(afterDelete.nodes.find((n) => n.id === laneId)).toBeUndefined();
+  });
+
+  it("renameLane updates the lane name hint", () => {
+    const { graph, laneId } = addLane(baseGraph);
+    const renamed = renameLane(graph, laneId, "My Lane");
+    const lane = renamed.nodes.find((n) => n.id === laneId);
+    // @ts-expect-error - name is an optional UI field
+    expect((lane as any).name).toBe("My Lane");
+  });
+
+  it("changeLaneBasePattern updates the base mini string", () => {
+    const { graph, laneId } = addLane(baseGraph, {
+      basePatternMini: "bd ~ sd ~",
+    });
+    const updated = changeLaneBasePattern(graph, laneId, "bd ~");
+    const lane = updated.nodes.find((n) => n.id === laneId && n.type === "lane")!;
+    const chain = updated.nodes.find(
+      (n) => n.id === (lane as any).head && n.type === "transformChain",
+    ) as any;
+    expect(chain.base.miniSerialization).toBe("bd ~");
+  });
+
+  it("add/remove/reorder transforms preserves user-defined order", () => {
+    const { graph, laneId } = addLane(baseGraph);
+    const withBank = addTransformToLane(graph, laneId, {
+      name: "bank",
+      args: ["tr909"],
+    });
+    const withSlow = addTransformToLane(withBank, laneId, {
+      name: "slow",
+      args: [2],
+    });
+
+    const lane = withSlow.nodes.find((n) => n.id === laneId && n.type === "lane")!;
+    const chain = withSlow.nodes.find(
+      (n) => n.id === (lane as any).head && n.type === "transformChain",
+    ) as any;
+
+    expect(chain.methods.map((m: any) => m.name)).toEqual(["bank", "slow"]);
+
+    const reordered = reorderLaneTransforms(withSlow, laneId, [
+      chain.methods[1].id,
+      chain.methods[0].id,
+    ]);
+    const lane2 = reordered.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    )!;
+    const chain2 = reordered.nodes.find(
+      (n) => n.id === (lane2 as any).head && n.type === "transformChain",
+    ) as any;
+    expect(chain2.methods.map((m: any) => m.name)).toEqual(["slow", "bank"]);
+
+    const removed = removeTransformFromLane(reordered, laneId, chain2.methods[0].id);
+    const lane3 = removed.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    )!;
+    const chain3 = removed.nodes.find(
+      (n) => n.id === (lane3 as any).head && n.type === "transformChain",
+    ) as any;
+    expect(chain3.methods.map((m: any) => m.name)).toEqual(["bank"]);
+  });
+
+  it("validatePatternGraph rejects non-parallel root", () => {
+    const bad: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "lane_root",
+      nodes: [
+        {
+          id: "lane_root",
+          type: "lane",
+          head: "chain",
+        } as any,
+        {
+          id: "chain",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    expect(() => validatePatternGraph(bad)).toThrow(
+      /root must be type "parallel"/,
+    );
+  });
+});
+

@@ -4,7 +4,17 @@ import { generate, generateDocument } from "@strudel-studio/code-generator";
 import type { TransformChain } from "@strudel-studio/pattern-ast";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 import type { ParseResult } from "@strudel-studio/strudel-parser";
-import { graphToAst } from "@strudel-studio/pattern-graph";
+import {
+  graphToAst,
+  addLane,
+  deleteLane,
+  renameLane,
+  changeLaneBasePattern,
+  addTransformToLane,
+  removeTransformFromLane,
+  reorderLaneTransforms,
+  validatePatternGraph,
+} from "@strudel-studio/pattern-graph";
 import { LaneStack } from "@strudel-studio/ui-components";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
@@ -69,8 +79,10 @@ const demoGraph: PatternGraph = {
 
 export default function App() {
   const [source, setSource] = useState<string>(() => generate(demoAst));
+  const [graph, setGraph] = useState<PatternGraph>(() => demoGraph);
   const [status, setStatus] = useState<string>("idle");
   const [parseInfo, setParseInfo] = useState<string>("not parsed yet");
+  const [graphError, setGraphError] = useState<string | null>(null);
 
   // Debounced parse state: last successful parse result.
   const [hasSubsetAst, setHasSubsetAst] = useState(false);
@@ -138,6 +150,21 @@ export default function App() {
     setSource(generate(demoAst));
   }, []);
 
+  function updateSourceFromGraph(nextGraph: PatternGraph) {
+    try {
+      validatePatternGraph(nextGraph);
+      const doc = graphToAst(nextGraph);
+      const code = generateDocument(doc);
+      setGraph(nextGraph);
+      setSource(code);
+      setGraphError(null);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Unknown error validating graph";
+      setGraphError(message);
+    }
+  }
+
   async function handleEvaluate() {
     setStatus("evaluating…");
     const result = await scheduler.queue(source);
@@ -198,17 +225,62 @@ export default function App() {
           Stacked lanes from pattern graph (parallel root). Compile to code to
           insert the generated Strudel into the editor above.
         </p>
-        <LaneStack graph={demoGraph} />
+        <LaneStack
+          graph={graph}
+          onAddLane={() => {
+            const { graph: next } = addLane(graph);
+            updateSourceFromGraph(next);
+          }}
+          onDeleteLane={(laneId) => {
+            const next = deleteLane(graph, laneId);
+            updateSourceFromGraph(next);
+          }}
+          onRenameLane={(laneId, newName) => {
+            const next = renameLane(graph, laneId, newName);
+            updateSourceFromGraph(next);
+          }}
+          onChangeBasePattern={(laneId, newMini) => {
+            const next = changeLaneBasePattern(graph, laneId, newMini);
+            updateSourceFromGraph(next);
+          }}
+          onAddTransform={(laneId) => {
+            // For v0.4, provide a simple default transform. Future versions
+            // will surface the transform registry and argument editing.
+            const next = addTransformToLane(graph, laneId, {
+              name: "slow",
+              args: [2],
+            });
+            updateSourceFromGraph(next);
+          }}
+          onReorderTransforms={(laneId, newOrder) => {
+            const next = reorderLaneTransforms(graph, laneId, newOrder);
+            updateSourceFromGraph(next);
+          }}
+          onRemoveTransform={(laneId, transformId) => {
+            const next = removeTransformFromLane(graph, laneId, transformId);
+            updateSourceFromGraph(next);
+          }}
+        />
         <div style={{ marginTop: "0.75rem" }}>
           <button
             type="button"
             onClick={() => {
-              const doc = graphToAst(demoGraph);
-              setSource(generateDocument(doc));
+              updateSourceFromGraph(graph);
             }}
           >
             Compile graph to code
           </button>
+          {graphError && (
+            <span
+              style={{
+                marginLeft: "0.75rem",
+                fontSize: "0.8rem",
+                color: "#b00",
+              }}
+            >
+              {graphError}
+            </span>
+          )}
         </div>
       </section>
     </main>

@@ -21,3 +21,14 @@ export type {
 
 export { graphToAst } from "./compile/graphToAst.js";
 
+export {
+  addLane,
+  deleteLane,
+  renameLane,
+  changeLaneBasePattern,
+  addTransformToLane,
+  removeTransformFromLane,
+  reorderLaneTransforms,
+  validatePatternGraph,
+} from "./mutations.js";
+

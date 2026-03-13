@@ -8,3 +8,10 @@ export {
 } from "./registry.js";
 export { validateTransformChain, validatePatternGraph, getSupportedAstVersion } from "./validate.js";
 export { withBudgetAsync } from "./budget.js";
+export {
+  TRANSFORM_REGISTRY,
+  getTransformSpec,
+  type TransformSpec,
+  type TransformArgSpec,
+  type TransformArgType,
+} from "./transformRegistry.js";

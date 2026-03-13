@@ -16,6 +16,7 @@ import {
   reorderLaneTransforms,
   validatePatternGraph,
 } from "@strudel-studio/pattern-graph";
+import { getTransformSpec } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
@@ -253,11 +254,16 @@ export default function App() {
                   updateSourceFromGraph(next);
                 },
                 onAddTransform: (laneId: string) => {
-                  // For v0.4, provide a simple default transform. Future versions
-                  // will surface the transform registry and argument editing.
+                  // For v0.4/v0.5, provide a simple default transform sourced
+                  // from the central registry, with a safe fallback.
+                  const spec =
+                    getTransformSpec("slow") ?? { name: "slow", defaultArgs: [2] };
                   const next = addTransformToLane(graph, laneId, {
-                    name: "slow",
-                    args: [2],
+                    name: spec.name,
+                    args:
+                      "defaultArgs" in spec && Array.isArray((spec as any).defaultArgs)
+                        ? (spec as any).defaultArgs
+                        : [2],
                   });
                   updateSourceFromGraph(next);
                 },

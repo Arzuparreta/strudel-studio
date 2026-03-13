@@ -104,3 +104,66 @@ export function getTransformSpec(name: string): TransformSpec | undefined {
   return TRANSFORM_REGISTRY[name];
 }
 
+/**
+ * Coerce a raw argument list according to a TransformSpec's arg metadata.
+ *
+ * Rules (intentionally simple for v0.6):
+ * - If no arg metadata is present, return raw as-is.
+ * - For each arg spec:
+ *   - If raw[i] is missing or undefined, use argSpec.default when provided.
+ *   - For type "number": coerce via Number(), clamp to [min, max] when set.
+ *   - For type "string": String(value).
+ *   - For type "boolean": truthy → true, falsy → false.
+ * - Extra raw args beyond spec.args length are preserved unchanged.
+ */
+export function coerceTransformArgs(
+  spec: TransformSpec,
+  raw: unknown[],
+): unknown[] {
+  if (!spec.args || spec.args.length === 0) {
+    return raw;
+  }
+
+  const coerced: unknown[] = [];
+
+  spec.args.forEach((argSpec, index) => {
+    const rawValue = index < raw.length ? raw[index] : undefined;
+    let value = rawValue;
+
+    if (value === undefined && argSpec.default !== undefined) {
+      value = argSpec.default;
+    }
+
+    if (value === undefined) {
+      coerced.push(value);
+      return;
+    }
+
+    if (argSpec.type === "number") {
+      let num = typeof value === "number" ? value : Number(value);
+      if (Number.isNaN(num)) {
+        num = typeof argSpec.default === "number" ? argSpec.default : 0;
+      }
+      if (typeof argSpec.min === "number" && num < argSpec.min) {
+        num = argSpec.min;
+      }
+      if (typeof argSpec.max === "number" && num > argSpec.max) {
+        num = argSpec.max;
+      }
+      coerced.push(num);
+    } else if (argSpec.type === "string") {
+      coerced.push(String(value));
+    } else if (argSpec.type === "boolean") {
+      coerced.push(Boolean(value));
+    } else {
+      coerced.push(value);
+    }
+  });
+
+  if (raw.length > spec.args.length) {
+    coerced.push(...raw.slice(spec.args.length));
+  }
+
+  return coerced;
+}
+

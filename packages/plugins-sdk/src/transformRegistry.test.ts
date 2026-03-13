@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { TRANSFORM_REGISTRY, getTransformSpec } from "./transformRegistry.js";
+import {
+  TRANSFORM_REGISTRY,
+  getTransformSpec,
+  coerceTransformArgs,
+} from "./transformRegistry.js";
 import { addTransformToLane, graphToAst } from "@strudel-studio/pattern-graph";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 
@@ -11,6 +15,21 @@ describe("transform registry", () => {
     const slow = getTransformSpec("slow");
     expect(slow).toBeDefined();
     expect(slow?.defaultArgs).toEqual([2]);
+  });
+
+  it("coerces args using spec metadata", () => {
+    const slow = getTransformSpec("slow");
+    const gain = getTransformSpec("gain");
+    expect(slow).toBeDefined();
+    expect(gain).toBeDefined();
+
+    // slow: factor is number with default 2.
+    expect(coerceTransformArgs(slow!, ["3"])).toEqual([3]);
+    expect(coerceTransformArgs(slow!, [])).toEqual([2]);
+
+    // gain: amount is number with default 1.
+    expect(coerceTransformArgs(gain!, ["0.5"])).toEqual([0.5]);
+    expect(coerceTransformArgs(gain!, [])).toEqual([1]);
   });
 
   it("integrates with graph → AST pipeline for a default transform", () => {

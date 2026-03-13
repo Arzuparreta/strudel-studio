@@ -17,7 +17,11 @@ import {
   validatePatternGraph,
 } from "@strudel-studio/pattern-graph";
 import { updateLaneTransformArgs } from "@strudel-studio/pattern-graph";
-import { TRANSFORM_REGISTRY, getTransformSpec } from "@strudel-studio/plugins-sdk";
+import {
+  TRANSFORM_REGISTRY,
+  getTransformSpec,
+  coerceTransformArgs,
+} from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { HapList } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
@@ -318,8 +322,8 @@ export default function App() {
                   // from the central registry, with a safe fallback.
                   const spec = getTransformSpec(selectedTransformName);
                   const name = spec?.name ?? selectedTransformName;
-                  const args = Array.isArray(spec?.defaultArgs)
-                    ? spec!.defaultArgs
+                  const args = spec
+                    ? coerceTransformArgs(spec, spec.defaultArgs)
                     : [];
                   const next = addTransformToLane(graph, laneId, {
                     name,

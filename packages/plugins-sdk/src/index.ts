@@ -11,6 +11,7 @@ export { withBudgetAsync } from "./budget.js";
 export {
   TRANSFORM_REGISTRY,
   getTransformSpec,
+  coerceTransformArgs,
   type TransformSpec,
   type TransformArgSpec,
   type TransformArgType,

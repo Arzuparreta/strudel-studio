@@ -2,6 +2,8 @@
 
 Visual music editor built on [Strudel](https://strudel.cc/). Code remains the source of truth; the UI edits a Pattern Graph / AST that compiles to Strudel.
 
+**v1.0 — Plugin system:** Extend the editor with custom transforms, plugin graph nodes, and UI panels. See [docs/plugin-authoring.md](docs/plugin-authoring.md) and [docs/project-roadmap.md](docs/project-roadmap.md).
+
 ## Getting started
 
 Requires **Node 18+** and **pnpm** (e.g. `corepack enable` then `pnpm install`, or `npm i -g pnpm`).

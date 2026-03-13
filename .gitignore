@@ -22,8 +22,9 @@ coverage
 .idea
 
 # Project docs (roadmap, architecture, sync-policy): for development only, not used by app
-docs/
-
+docs/architecture.md
+docs/project-roadmap.md
+docs/sync-policy.md
 
 apps/studio/dist
 apps/studio/node_modules

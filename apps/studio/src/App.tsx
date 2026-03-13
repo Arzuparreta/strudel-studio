@@ -248,42 +248,38 @@ export default function App() {
     return (
       <ul>
         {lanes.map((lane) => {
-          const chain = graphToDescribe.nodes.find(
-            (n) => n.id === lane.head && n.type === "transformChain",
-          ) as
-            | {
-                id: string;
-                type: "transformChain";
-                base: { kind: string; miniSerialization: string };
-                methods: { id: string; name: string; args: unknown[] }[];
-              }
-            | undefined;
+        const chain = graphToDescribe.nodes.find(
+          (n) => n.id === lane.head && n.type === "transformChain",
+        ) as
+          | {
+              id: string;
+              type: "transformChain";
+              base: { kind: string; miniSerialization: string };
+              methods: { id: string; name: string; args: unknown[] }[];
+            }
+          | undefined;
 
-          if (!chain) {
-            return (
-              <li key={lane.id}>
-                <code>lane {lane.id}: (no transform chain found)</code>
-              </li>
-            );
-          }
+        const baseLabel = chain
+          ? `${chain.base.kind}("${chain.base.miniSerialization}")`
+          : "(no transform chain)";
 
-          const baseLabel = `${chain.base.kind}("${chain.base.miniSerialization}")`;
-          const methodsLabel =
-            chain.methods.length === 0
-              ? "(no transforms)"
-              : chain.methods
-                  .map((m) => {
-                    const argString = m.args
-                      .map((a) => String(a))
-                      .join(", ");
-                    return `${m.name}(${argString})`;
-                  })
-                  .join(" → ");
+        const methods = chain?.methods ?? [];
+        const methodsLabel =
+          methods.length === 0
+            ? "(no transforms)"
+            : methods
+                .map((m) => {
+                  const argString = (m.args ?? [])
+                    .map((a) => String(a))
+                    .join(", ");
+                  return `${m.name ?? "(unknown)"}(${argString})`;
+                })
+                .join(" → ");
 
           return (
             <li key={lane.id}>
               <code>
-                {lane.id}: {baseLabel} {methodsLabel}
+                  {lane.id}: {baseLabel} {methodsLabel ?? "(no transforms)"}
               </code>
             </li>
           );

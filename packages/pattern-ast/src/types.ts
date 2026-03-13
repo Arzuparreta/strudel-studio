@@ -59,5 +59,13 @@ export interface CompositePattern {
   children: PatternDoc[];
 }
 
-/** Root-level pattern: either a single chain or a composition (stack/cat). */
-export type PatternDoc = TransformChain | CompositePattern;
+/**
+ * Silence pattern (no events). Used when a lane is muted in live performance (v1.2).
+ * Codegen emits Strudel's `silence`.
+ */
+export interface SilencePattern {
+  silence: true;
+}
+
+/** Root-level pattern: chain, composition (stack/cat), or silence. */
+export type PatternDoc = TransformChain | CompositePattern | SilencePattern;

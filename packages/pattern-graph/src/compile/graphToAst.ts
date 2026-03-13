@@ -8,10 +8,12 @@ import type {
   PluginNode,
 } from "../schema.js";
 
-/** Options for graph → AST compilation (v1.0 plugin node support). */
+/** Options for graph → AST compilation (v1.0 plugin node support, v1.2 lane mute). */
 export interface GraphToAstOptions {
   /** When present, plugin nodes are compiled via this callback. */
   compilePluginNode?: (node: PluginNode) => PatternDoc;
+  /** Lane node ids to treat as muted; compiled as silence (v1.2 live performance). */
+  mutedLaneIds?: Set<string>;
 }
 
 function findNode(graph: PatternGraph, id: string): GraphNode {
@@ -92,8 +94,11 @@ function getCompositionChildIds(graph: PatternGraph, node: CompositionNode): str
   return fromEdges.slice().sort((a, b) => a.localeCompare(b));
 }
 
+/** Silence PatternDoc for muted lanes (v1.2). */
+const SILENCE_DOC: PatternDoc = { silence: true };
+
 /**
- * Compile a single graph node to a PatternDoc (chain or stack/cat composition).
+ * Compile a single graph node to a PatternDoc (chain, stack/cat composition, or silence).
  */
 function compileNode(
   graph: PatternGraph,
@@ -107,6 +112,9 @@ function compileNode(
   }
 
   if (node.type === "lane") {
+    if (options?.mutedLaneIds?.has(nodeId)) {
+      return SILENCE_DOC;
+    }
     const lane = toLaneNode(node);
     const headNode = findNode(graph, lane.head);
     const chain = toTransformChainNode(headNode);

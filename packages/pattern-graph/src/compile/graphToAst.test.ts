@@ -116,6 +116,51 @@ describe("graphToAst", () => {
     expect((children[1] as { base: { mini: string } }).base.mini).toBe("eb2 buddy");
   });
 
+  it("compiles muted lanes as silence when mutedLaneIds is provided (v1.2)", () => {
+    const graph: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        {
+          id: "root_parallel",
+          type: "parallel",
+          order: ["lane_drums", "lane_bass"],
+        },
+        {
+          id: "lane_drums",
+          type: "lane",
+          head: "n_drums",
+        },
+        {
+          id: "n_drums",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd ~ sd ~" },
+          methods: [],
+        },
+        {
+          id: "lane_bass",
+          type: "lane",
+          head: "n_bass",
+        },
+        {
+          id: "n_bass",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "eb2 buddy" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    };
+
+    const doc = graphToAst(graph, { mutedLaneIds: new Set(["lane_drums"]) });
+    expect(doc).toHaveProperty("call", "stack");
+    const children = (doc as { call: string; children: unknown[] }).children;
+    expect(children).toHaveLength(2);
+    expect(children[0]).toEqual({ silence: true });
+    expect((children[1] as { base: { mini: string } }).base.mini).toBe("eb2 buddy");
+  });
+
   it("compiles a serial root to cat(child1, child2)", () => {
     const graph: PatternGraph = {
       graphVersion: 2,

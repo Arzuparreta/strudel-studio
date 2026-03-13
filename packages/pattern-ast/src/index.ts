@@ -13,6 +13,7 @@ export {
   type ChainMethods,
   type TransformChain,
   type CompositePattern,
+  type SilencePattern,
   type PatternDoc,
 } from "./types.js";
 

@@ -38,6 +38,10 @@ export interface LaneStackProps {
   selectedTransformForLane?: Record<string, string>;
   /** Optional callback to change the selected transform for a lane. */
   onSelectTransformForLane?: (laneId: string, transformName: string) => void;
+  /** Optional set of lane ids that are muted (v1.2 live performance). */
+  mutedLaneIds?: Set<string>;
+  /** Optional callback to toggle mute for a lane. */
+  onToggleMute?: (laneId: string) => void;
 }
 
 function findNode(graph: PatternGraph, id: string): GraphNode | undefined {
@@ -104,6 +108,8 @@ export function LaneStack({
   availableTransforms,
   selectedTransformForLane,
   onSelectTransformForLane,
+  mutedLaneIds,
+  onToggleMute,
 }: LaneStackProps) {
   const trackIds = getTopLevelTrackIds(graph);
   const isInteractive =
@@ -190,6 +196,17 @@ export function LaneStack({
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <span style={{ fontWeight: 600 }}>{index + 1}.</span>
+                {onToggleMute && (
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.85rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={mutedLaneIds?.has(lane.id) ?? false}
+                      onChange={() => onToggleMute(lane.id)}
+                      aria-label={`Mute ${laneName}`}
+                    />
+                    Mute
+                  </label>
+                )}
                 {onRenameLane ? (
                   <input
                     type="text"

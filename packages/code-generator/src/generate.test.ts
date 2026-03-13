@@ -104,6 +104,21 @@ describe("generateDocument", () => {
       'stack(cat(s("bd"), s("sd")), s("hh"))',
     );
   });
+
+  it("emits silence for SilencePattern (v1.2 lane mute)", () => {
+    expect(generateDocument({ silence: true })).toBe("silence");
+  });
+
+  it("emits stack with muted lane as silence", () => {
+    const doc: PatternDoc = {
+      call: "stack",
+      children: [
+        { silence: true },
+        { id: "b", base: { kind: "s", mini: "sd ~" }, methods: [] },
+      ],
+    };
+    expect(generateDocument(doc)).toBe('stack(silence, s("sd ~"))');
+  });
 });
 
 describe("formatLiteral", () => {

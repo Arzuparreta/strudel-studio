@@ -53,12 +53,20 @@ export function generate(ast: TransformChain): string {
   return head + parts.join("");
 }
 
+/** True if doc is the silence pattern (v1.2 lane mute). */
+function isSilence(doc: PatternDoc): doc is { silence: true } {
+  return typeof doc === "object" && doc !== null && "silence" in doc && (doc as { silence: unknown }).silence === true;
+}
+
 /**
- * Generate Strudel source from a PatternDoc (single chain or stack/cat composition).
+ * Generate Strudel source from a PatternDoc (single chain, stack/cat composition, or silence).
  * Deterministic: child order follows the AST order.
  * @see docs/implementation-roadmap.md Task 3.2 (multi-track)
  */
 export function generateDocument(doc: PatternDoc): string {
+  if (isSilence(doc)) {
+    return "silence";
+  }
   if (isComposite(doc)) {
     const args = doc.children.map((child) => generateDocument(child));
     return `${doc.call}(${args.join(", ")})`;

@@ -161,6 +161,8 @@ export default function App() {
     null,
   );
 
+  const [mutedLanes, setMutedLanes] = useState<Set<string>>(() => new Set());
+
   const [patternLibrary, setPatternLibrary] = useState<PatternLibraryEntry[]>(
     loadPatternLibrary,
   );
@@ -274,11 +276,15 @@ export default function App() {
     setSource(nextSource);
   }
 
-  function updateSourceFromGraph(nextGraph: PatternGraph) {
+  function updateSourceFromGraph(
+    nextGraph: PatternGraph,
+    mutedLaneIds?: Set<string>,
+  ) {
     try {
       validatePatternGraph(nextGraph);
       const doc = graphToAst(nextGraph, {
         compilePluginNode: createPluginNodeCompiler(),
+        mutedLaneIds: mutedLaneIds ?? undefined,
       });
       const code = generateDocument(doc);
       setGraph(nextGraph);
@@ -332,7 +338,7 @@ export default function App() {
     }
     try {
       const nextGraph = astToGraph(result.ast);
-      updateSourceFromGraph(nextGraph);
+      updateSourceFromGraph(nextGraph, mutedLanes);
     } catch (e) {
       setGraphError(
         e instanceof Error ? e.message : "Unknown error building graph from AST",
@@ -680,23 +686,23 @@ export default function App() {
                     ...prev,
                     [laneId]: selectedTransformName,
                   }));
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onDeleteLane: (laneId: string) => {
                   const next = deleteLane(graph, laneId);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onRenameLane: (laneId: string, newName: string) => {
                   const next = renameLane(graph, laneId, newName);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onChangeCycleHint: (laneId: string, nextHint: number | null) => {
                   const next = setLaneCycleHint(graph, laneId, nextHint);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onChangeBasePattern: (laneId: string, newMini: string) => {
                   const next = changeLaneBasePattern(graph, laneId, newMini);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onAddTransform: (laneId: string, transformNameFromLane?: string) => {
                   // Per-lane selector (refinement 3): use lane's choice when provided,
@@ -714,15 +720,15 @@ export default function App() {
                     name,
                     args,
                   });
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onReorderTransforms: (laneId: string, newOrder: string[]) => {
                   const next = reorderLaneTransforms(graph, laneId, newOrder);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onRemoveTransform: (laneId: string, transformId: string) => {
                   const next = removeTransformFromLane(graph, laneId, transformId);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 onChangeTransformArgs: (
                   laneId: string,
@@ -759,7 +765,7 @@ export default function App() {
                     transformId,
                     coercedArgs,
                   );
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 },
                 availableTransforms: getAvailableTransformNames(),
                 selectedTransformForLane: laneTransformSelections,
@@ -772,6 +778,14 @@ export default function App() {
                     [laneId]: transformName,
                   }));
                 },
+                mutedLaneIds: mutedLanes,
+                onToggleMute: (laneId: string) => {
+                  const next = new Set(mutedLanes);
+                  if (next.has(laneId)) next.delete(laneId);
+                  else next.add(laneId);
+                  setMutedLanes(next);
+                  updateSourceFromGraph(graph, next);
+                },
               }
             : {})}
         />
@@ -781,7 +795,7 @@ export default function App() {
             disabled={!canEditGraph}
             onClick={() => {
               if (!canEditGraph) return;
-              updateSourceFromGraph(graph);
+              updateSourceFromGraph(graph, mutedLanes);
             }}
           >
             Compile graph to code
@@ -943,7 +957,7 @@ export default function App() {
                         selectedGraphNodeId,
                         entry.content,
                       );
-                      updateSourceFromGraph(next);
+                      updateSourceFromGraph(next, mutedLanes);
                     }}
                   >
                     Apply to selected lane
@@ -992,7 +1006,7 @@ export default function App() {
                 [laneId]: selectedTransformName,
               }));
               setSelectedGraphNodeId(laneId);
-              updateSourceFromGraph(next);
+              updateSourceFromGraph(next, mutedLanes);
             }}
           >
             {graph.nodes.find((n) => n.id === graph.root)?.type === "serial"
@@ -1023,7 +1037,7 @@ export default function App() {
                 return nextSelections;
               });
               setSelectedGraphNodeId(null);
-              updateSourceFromGraph(next);
+              updateSourceFromGraph(next, mutedLanes);
             }}
           >
             Delete selected lane
@@ -1073,7 +1087,7 @@ export default function App() {
                         selectedLane.id,
                         e.target.value,
                       );
-                      updateSourceFromGraph(next);
+                      updateSourceFromGraph(next, mutedLanes);
                     }}
                     style={{
                       fontFamily: "inherit",
@@ -1106,7 +1120,7 @@ export default function App() {
                         selectedLane.id,
                         nextHint,
                       );
-                      updateSourceFromGraph(next);
+                      updateSourceFromGraph(next, mutedLanes);
                     }}
                     style={{
                       fontFamily: "inherit",
@@ -1157,7 +1171,7 @@ export default function App() {
                     newOrder[idx - 1] = newOrder[idx]!;
                     newOrder[idx] = tmp;
                     const next = reorder(graph, newOrder);
-                    updateSourceFromGraph(next);
+                    updateSourceFromGraph(next, mutedLanes);
                   }}
                 >
                   Move lane up
@@ -1172,7 +1186,7 @@ export default function App() {
                     newOrder[idx + 1] = newOrder[idx]!;
                     newOrder[idx] = tmp;
                     const next = reorder(graph, newOrder);
-                    updateSourceFromGraph(next);
+                    updateSourceFromGraph(next, mutedLanes);
                   }}
                 >
                   Move lane down
@@ -1198,12 +1212,12 @@ export default function App() {
               if (root?.type === "parallel")
                 return (newOrder: string[]) => {
                   const next = reorderParallelLanes(graph, newOrder);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 };
               if (root?.type === "serial")
                 return (newOrder: string[]) => {
                   const next = reorderSerialChildren(graph, newOrder);
-                  updateSourceFromGraph(next);
+                  updateSourceFromGraph(next, mutedLanes);
                 };
               return undefined;
             })()

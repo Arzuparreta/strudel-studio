@@ -5,6 +5,7 @@ import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 import type { ParseResult } from "@strudel-studio/strudel-parser";
 import {
   graphToAst,
+  astToGraph,
   addLane,
   deleteLane,
   renameLane,
@@ -176,6 +177,25 @@ export default function App() {
     }
   }
 
+  /** v0.8: Import current code into the graph (when parse yields AST). */
+  function handleImportCodeIntoGraph() {
+    const result = parseToAstOrOpaque(source);
+    if (result.ast == null) {
+      setGraphError(
+        "Cannot import: code could not be parsed to a graph (unsupported or opaque).",
+      );
+      return;
+    }
+    try {
+      const nextGraph = astToGraph(result.ast);
+      updateSourceFromGraph(nextGraph);
+    } catch (e) {
+      setGraphError(
+        e instanceof Error ? e.message : "Unknown error building graph from AST",
+      );
+    }
+  }
+
   async function handleEvaluate() {
     setStatus("evaluating…");
     const result = await scheduler.queue(source);
@@ -335,12 +355,15 @@ export default function App() {
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Generated Strudel code</h2>
         <MonacoEditor value={source} onChange={handleSourceChange} />
-        <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
+        <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
           <button type="button" onClick={handleEvaluate}>
             Generate &amp; Play
           </button>
           <button type="button" onClick={handleStop}>
             Stop
+          </button>
+          <button type="button" onClick={handleImportCodeIntoGraph}>
+            Import code into graph
           </button>
           <span>{status}</span>
         </div>

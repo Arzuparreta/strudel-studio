@@ -20,6 +20,7 @@ export type {
 } from "./schema.js";
 
 export { graphToAst } from "./compile/graphToAst.js";
+export { astToGraph } from "./compile/astToGraph.js";
 
 export {
   addLane,

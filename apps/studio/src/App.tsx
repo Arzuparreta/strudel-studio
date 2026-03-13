@@ -541,8 +541,9 @@ export default function App() {
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Composition graph</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
-          Read-only visualization of the current PatternGraph structure. This
-          view focuses on the parallel root and its lane children.
+          Visualization of the PatternGraph: parallel/serial root and lane
+          children. Select a lane to rename or delete it; drag lane cards to
+          reorder, or use Move up/down.
         </p>
         <div
           style={{
@@ -597,6 +598,56 @@ export default function App() {
           >
             Delete selected lane
           </button>
+          {(() => {
+            const selectedLane =
+              selectedGraphNodeId != null
+                ? graph.nodes.find(
+                    (n) =>
+                      n.id === selectedGraphNodeId && n.type === "lane",
+                  )
+                : undefined;
+            const laneDisplayName =
+              selectedLane != null
+                ? (typeof (selectedLane as { name?: string }).name ===
+                  "string"
+                    ? (selectedLane as { name: string }).name
+                    : selectedLane.id)
+                : "";
+            return (
+              selectedLane &&
+              canEditGraph && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <label htmlFor="composition-rename-lane">Rename:</label>
+                  <input
+                    id="composition-rename-lane"
+                    type="text"
+                    value={laneDisplayName}
+                    onChange={(e) => {
+                      const next = renameLane(
+                        graph,
+                        selectedLane.id,
+                        e.target.value,
+                      );
+                      updateSourceFromGraph(next);
+                    }}
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: "0.85rem",
+                      padding: "0.15rem 0.35rem",
+                      width: "8rem",
+                    }}
+                  />
+                </div>
+              )
+            );
+          })()}
           {(() => {
             const root = graph.nodes.find((n) => n.id === graph.root);
             const order =

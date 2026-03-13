@@ -1,6 +1,6 @@
 # strudel-studio
 
-Visual music editor built on [Strudel](https://codeberg.org/uzu/strudel). Code remains the source of truth; the UI edits a Pattern Graph / AST that compiles to Strudel.
+Visual music editor built on [Strudel](https://strudel.cc/). Code remains the source of truth; the UI edits a Pattern Graph / AST that compiles to Strudel.
 
 ## Getting started
 

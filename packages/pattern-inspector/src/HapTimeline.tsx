@@ -1,5 +1,6 @@
 import type { Hap } from "@strudel-studio/strudel-bridge";
 import type { JSX } from "react";
+import type { LaneInfo } from "./HapList.js";
 
 export interface HapTimelineProps {
   /** Haps from the shared hap cache (with per-event start/end for layout). */
@@ -8,6 +9,8 @@ export interface HapTimelineProps {
   timeWindow?: { from: number; to: number };
   /** Height of each event row in px. */
   rowHeight?: number;
+  /** Optional lane order for labeling when haps carry laneId (refinement 5). */
+  laneOrder?: LaneInfo[];
 }
 
 /**
@@ -51,6 +54,7 @@ export function HapTimeline({
   haps,
   timeWindow,
   rowHeight = 28,
+  laneOrder = [],
 }: HapTimelineProps): JSX.Element {
   const from = timeWindow?.from ?? 0;
   const to = timeWindow?.to ?? 1;
@@ -64,16 +68,27 @@ export function HapTimeline({
     );
   }
 
-  // Group by lane (sound / note / other) for multi-row timeline (roadmap sketch).
+  const hasLaneId = haps.some((h) => h.laneId != null);
   const byLane = new Map<string, Hap[]>();
-  for (const hap of haps) {
-    const key = laneKeyForValue(hap.value);
-    if (!byLane.has(key)) byLane.set(key, []);
-    byLane.get(key)!.push(hap);
+
+  if (hasLaneId) {
+    for (const hap of haps) {
+      const id = hap.laneId ?? "";
+      if (!byLane.has(id)) byLane.set(id, []);
+      byLane.get(id)!.push(hap);
+    }
+  } else {
+    for (const hap of haps) {
+      const key = laneKeyForValue(hap.value);
+      if (!byLane.has(key)) byLane.set(key, []);
+      byLane.get(key)!.push(hap);
+    }
   }
-  const orderedLanes = LANE_ORDER.filter((k) => byLane.has(k));
-  const remaining = [...byLane.keys()].filter((k) => !LANE_ORDER.includes(k));
-  const laneKeys = [...orderedLanes, ...remaining.sort()];
+
+  const order = hasLaneId && laneOrder.length ? laneOrder.map((l) => l.id) : LANE_ORDER;
+  const orderedKeys = order.filter((k) => byLane.has(k));
+  const remaining = [...byLane.keys()].filter((k) => !order.includes(k));
+  const laneKeys = [...orderedKeys, ...remaining.sort()];
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", fontSize: "0.85rem" }}>
@@ -101,6 +116,9 @@ export function HapTimeline({
           const laneHaps = [...(byLane.get(key) ?? [])].sort(
             (a, b) => a.start - b.start || a.end - b.end,
           );
+          const rowLabel = hasLaneId
+            ? (laneOrder.find((l) => l.id === key)?.name ?? (key || "Pattern"))
+            : key;
           return (
             <div
               key={key}
@@ -108,14 +126,14 @@ export function HapTimeline({
             >
               <div
                 style={{
-                  width: 48,
+                  width: hasLaneId ? 80 : 48,
                   textAlign: "right",
                   fontSize: "0.7rem",
                   color: "#777",
                   flexShrink: 0,
                 }}
               >
-                {key}
+                {hasLaneId ? `Lane: ${rowLabel}` : rowLabel}
               </div>
               <div
                 data-testid={`timeline-row-${key}`}

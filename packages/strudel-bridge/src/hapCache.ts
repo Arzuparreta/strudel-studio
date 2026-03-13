@@ -15,6 +15,8 @@ export interface Hap {
   value: unknown;
   /** Buffer generation id that produced this hap. */
   bufferGeneration: number;
+  /** Optional lane id when haps are recorded per lane (refinement 5). */
+  laneId?: string;
 }
 
 /**
@@ -84,8 +86,16 @@ export class HapCache {
    * The caller should obtain these by calling `pattern.queryArc(from, to)`
    * on the active buffer pattern. Each raw hap may have part/whole timespans;
    * when present, per-event start/end are used for timeline display.
+   *
+   * When laneId is provided (e.g. when recording from a per-lane pattern),
+   * each hap is tagged so the inspector can group by lane (refinement 5).
    */
-  public recordHaps(window: HapCacheWindow, rawHaps: readonly any[], bufferGeneration: number): void {
+  public recordHaps(
+    window: HapCacheWindow,
+    rawHaps: readonly any[],
+    bufferGeneration: number,
+    laneId?: string,
+  ): void {
     const batch: Hap[] = rawHaps.map((raw) => {
       const { start, end } = spanFromRaw(raw, window);
       return {
@@ -93,6 +103,7 @@ export class HapCache {
         end,
         value: valueFromRaw(raw),
         bufferGeneration,
+        ...(laneId !== undefined ? { laneId } : {}),
       };
     });
 

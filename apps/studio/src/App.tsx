@@ -112,6 +112,20 @@ export default function App() {
     [],
   );
 
+  /** Lane order for inspector grouping (refinement 5); when haps carry laneId, list/timeline group by lane. */
+  const inspectorLaneOrder = useMemo(() => {
+    const root = graph.nodes.find((n) => n.id === graph.root) as
+      | { order?: string[] }
+      | undefined;
+    const order = root?.order ?? [];
+    return order.map((id: string) => {
+      const lane = graph.nodes.find(
+        (n) => n.id === id && n.type === "lane",
+      ) as { name?: string } | undefined;
+      return { id, name: lane?.name };
+    });
+  }, [graph]);
+
   const hapCache = useMemo(() => new HapCache(), []);
 
   useEffect(() => {
@@ -429,7 +443,7 @@ export default function App() {
           Read-only view of recent haps from the evaluated pattern.
           Time window 0–1 is filled at evaluation; other windows use a one-shot scrub (throttled).
         </p>
-        <HapList haps={haps} />
+        <HapList haps={haps} laneOrder={inspectorLaneOrder} />
         <div style={{ marginTop: "1rem" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
             Pattern timeline (v0.9)
@@ -521,6 +535,7 @@ export default function App() {
           <HapTimeline
             haps={haps}
             timeWindow={timelineWindow}
+            laneOrder={inspectorLaneOrder}
           />
         </div>
         <div style={{ marginTop: "0.75rem" }}>
@@ -596,11 +611,13 @@ export default function App() {
                   const next = changeLaneBasePattern(graph, laneId, newMini);
                   updateSourceFromGraph(next);
                 },
-                onAddTransform: (laneId: string) => {
-                  // For v0.4/v0.5, provide a simple default transform sourced
-                  // from the central registry, with a safe fallback.
+                onAddTransform: (laneId: string, transformNameFromLane?: string) => {
+                  // Per-lane selector (refinement 3): use lane's choice when provided,
+                  // else fall back to stored per-lane default or global default.
                   const transformName =
-                    laneTransformSelections[laneId] ?? selectedTransformName;
+                    transformNameFromLane ??
+                    laneTransformSelections[laneId] ??
+                    selectedTransformName;
                   const spec = getTransformSpec(transformName);
                   const name = spec?.name ?? transformName;
                   const args = spec
@@ -659,6 +676,9 @@ export default function App() {
                 },
                 availableTransforms: Object.keys(TRANSFORM_REGISTRY),
                 selectedTransformForLane: laneTransformSelections,
+                // Refinement 4: selector affects only NEW transforms. Changing the
+                // selection here only updates UI state; existing transforms in the
+                // graph are never modified. Only "+ Add transform" uses this default.
                 onSelectTransformForLane: (laneId: string, transformName: string) => {
                   setLaneTransformSelections((prev) => ({
                     ...prev,

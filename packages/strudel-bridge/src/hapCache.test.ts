@@ -58,5 +58,18 @@ describe("HapCache", () => {
     expect(haps[1]).toMatchObject({ start: 0.25, end: 0.5, value: { note: "sd" } });
     expect(haps[2]).toMatchObject({ start: 0.5, end: 0.75, value: { note: "bd" } });
   });
+
+  it("tags haps with laneId when provided (refinement 5)", () => {
+    const cache = new HapCache(16);
+    cache.recordHaps(
+      { from: 0, to: 1 },
+      [{ value: { kind: "bd" } }],
+      1,
+      "lane_drums",
+    );
+    const haps = cache.getHaps({ from: 0, to: 1 });
+    expect(haps).toHaveLength(1);
+    expect(haps[0]?.laneId).toBe("lane_drums");
+  });
 });
 

@@ -328,7 +328,12 @@ export function LaneStack({
                   {onAddTransform && (
                     <button
                       type="button"
-                      onClick={() => onAddTransform(lane.id)}
+                      onClick={() =>
+                        onAddTransform(
+                          lane.id,
+                          selectedTransformName || undefined,
+                        )
+                      }
                       style={{ fontSize: "0.8rem" }}
                     >
                       + Add transform

@@ -120,6 +120,32 @@ describe("PatternGraph lane mutations", () => {
     expect(chain.base.miniSerialization).toBe("bd ~");
   });
 
+  it("addTransformToLane only appends; existing transforms unchanged (refinement 4)", () => {
+    const { graph, laneId } = addLane(baseGraph);
+    const withSlow = addTransformToLane(graph, laneId, {
+      name: "slow",
+      args: [2],
+    });
+    const lane1 = withSlow.nodes.find((n) => n.id === laneId && n.type === "lane") as any;
+    const chain1 = withSlow.nodes.find(
+      (n) => n.id === lane1.head && n.type === "transformChain",
+    ) as any;
+    expect(chain1.methods).toHaveLength(1);
+    expect(chain1.methods[0].name).toBe("slow");
+
+    const withGain = addTransformToLane(withSlow, laneId, {
+      name: "gain",
+      args: [0.5],
+    });
+    const lane2 = withGain.nodes.find((n) => n.id === laneId && n.type === "lane") as any;
+    const chain2 = withGain.nodes.find(
+      (n) => n.id === lane2.head && n.type === "transformChain",
+    ) as any;
+    expect(chain2.methods).toHaveLength(2);
+    expect(chain2.methods[0].name).toBe("slow");
+    expect(chain2.methods[1].name).toBe("gain");
+  });
+
   it("add/remove/reorder transforms preserves user-defined order", () => {
     const { graph, laneId } = addLane(baseGraph);
     const withBank = addTransformToLane(graph, laneId, {

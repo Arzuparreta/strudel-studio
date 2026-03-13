@@ -341,7 +341,7 @@ export function validatePatternGraph(graph: PatternGraph): void {
     );
   }
 
-  const root = rootNodes[0];
+  const root = rootNodes[0]!;
   if (root.type !== "parallel") {
     throw new Error(
       `PatternGraph: root must be type "parallel" for lane editor, got ${root.type}`,

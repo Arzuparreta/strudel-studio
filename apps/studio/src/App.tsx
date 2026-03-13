@@ -163,6 +163,15 @@ export default function App() {
 
   const [mutedLanes, setMutedLanes] = useState<Set<string>>(() => new Set());
 
+  /** v1.2 pattern morph: captured A/B and amount 0..1; interpolates numeric args. */
+  type MorphSnapshot = {
+    laneId: string;
+    methods: { id: string; name: string; args: unknown[] }[];
+  };
+  const [morphA, setMorphA] = useState<MorphSnapshot | null>(null);
+  const [morphB, setMorphB] = useState<MorphSnapshot | null>(null);
+  const [morphAmount, setMorphAmount] = useState(0);
+
   const [patternLibrary, setPatternLibrary] = useState<PatternLibraryEntry[]>(
     loadPatternLibrary,
   );
@@ -296,6 +305,38 @@ export default function App() {
         e instanceof Error ? e.message : "Unknown error validating graph";
       setGraphError(message);
     }
+  }
+
+  /** v1.2 pattern morph: interpolate numeric args between two method snapshots; t in [0,1]. */
+  function interpolateMorphMethods(
+    methodsA: { id: string; name: string; args: unknown[] }[],
+    methodsB: { id: string; name: string; args: unknown[] }[],
+    t: number,
+  ): { id: string; name: string; args: unknown[] }[] {
+    if (methodsA.length !== methodsB.length) return t < 0.5 ? methodsA : methodsB;
+    return methodsA.map((ma, i) => {
+      const mb = methodsB[i];
+      if (!mb || ma.id !== mb.id || ma.name !== mb.name)
+        return t < 0.5 ? ma : mb;
+      const args = ma.args.map((a, j) => {
+        const b = mb.args[j];
+        const an = Number(a);
+        const bn = Number(b);
+        if (Number.isFinite(an) && Number.isFinite(bn))
+          return an * (1 - t) + bn * t;
+        return t < 0.5 ? a : b;
+      });
+      return { id: ma.id, name: ma.name, args };
+    });
+  }
+
+  /** v1.2: apply interpolated morph to graph for laneId and update source. */
+  function applyMorph(laneId: string, methods: { id: string; name: string; args: unknown[] }[]) {
+    let next = graph;
+    for (const m of methods) {
+      next = updateLaneTransformArgs(next, laneId, m.id, m.args);
+    }
+    updateSourceFromGraph(next, mutedLanes);
   }
 
   /** v0.9.1: Change timeline display window and refresh haps from cache (inspector reads only cache). */
@@ -1105,6 +1146,90 @@ export default function App() {
                     </div>
                   );
                 })}
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    padding: "0.5rem",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    backgroundColor: "#f5f5f5",
+                  }}
+                >
+                  <h3 style={{ fontSize: "0.95rem", marginBottom: "0.5rem" }}>
+                    Pattern morph
+                  </h3>
+                  <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
+                    Capture two states (A and B) for this lane, then interpolate
+                    between them.
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!selectedGraphNodeId || !chain) return;
+                        setMorphA({
+                          laneId: selectedGraphNodeId,
+                          methods: chain.methods.map((m) => ({
+                            id: m.id,
+                            name: m.name,
+                            args: [...m.args],
+                          })),
+                        });
+                      }}
+                    >
+                      Set A
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!selectedGraphNodeId || !chain) return;
+                        setMorphB({
+                          laneId: selectedGraphNodeId,
+                          methods: chain.methods.map((m) => ({
+                            id: m.id,
+                            name: m.name,
+                            args: [...m.args],
+                          })),
+                        });
+                      }}
+                    >
+                      Set B
+                    </button>
+                    {morphA &&
+                      morphB &&
+                      morphA.laneId === selectedGraphNodeId &&
+                      morphB.laneId === selectedGraphNodeId && (
+                      <label style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                        <span>Morph:</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={morphAmount}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setMorphAmount(v);
+                            applyMorph(
+                              selectedGraphNodeId,
+                              interpolateMorphMethods(
+                                morphA.methods,
+                                morphB.methods,
+                                v,
+                              ),
+                            );
+                          }}
+                        />
+                        <span>{morphAmount.toFixed(2)}</span>
+                      </label>
+                    )}
+                  </div>
+                  {(!morphA || !morphB || morphA.laneId !== selectedGraphNodeId || morphB.laneId !== selectedGraphNodeId) && (
+                    <p style={{ fontSize: "0.8rem", color: "#888", marginTop: "0.35rem" }}>
+                      Set A and Set B to enable the morph slider.
+                    </p>
+                  )}
+                </div>
               </div>
             );
           })()

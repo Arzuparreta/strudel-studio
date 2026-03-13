@@ -23,6 +23,9 @@ importers:
 
   apps/studio:
     dependencies:
+      '@strudel-studio/code-generator':
+        specifier: workspace:*
+        version: link:../../packages/code-generator
       '@strudel-studio/strudel-bridge':
         specifier: workspace:*
         version: link:../../packages/strudel-bridge

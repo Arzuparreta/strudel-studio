@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { PatternGraph, GraphNode } from "@strudel-studio/pattern-graph";
 import { getNodeLabel } from "./laneStackUtils.js";
 
+/** MIME type for drag of a pattern library entry (v1.1 drag-and-drop). */
+export const LIBRARY_PATTERN_DRAG_TYPE = "application/x-strudel-library-pattern";
+
 export interface GraphCanvasProps {
   graph: PatternGraph;
   className?: string;
@@ -9,6 +12,8 @@ export interface GraphCanvasProps {
   onSelectNode?: (nodeId: string) => void;
   /** When provided, lane cards become draggable to reorder; called with the new lane id order. */
   onReorderLanes?: (newOrder: string[]) => void;
+  /** When provided, lane cards accept drop of a library pattern; called with (laneId, libraryEntryId). */
+  onDropLibraryPattern?: (laneId: string, libraryEntryId: string) => void;
 }
 
 function isCompositionRoot(
@@ -23,6 +28,7 @@ export function GraphCanvas({
   selectedNodeId,
   onSelectNode,
   onReorderLanes,
+  onDropLibraryPattern,
 }: GraphCanvasProps) {
   const [isDragging, setIsDragging] = useState(false);
   const nodesById = new Map<string, GraphNode>(
@@ -163,14 +169,26 @@ export function GraphCanvas({
                   }}
                   onDragEnd={() => setIsDragging(false)}
                   onDragOver={(e) => {
-                    if (!onReorderLanes) return;
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
+                    const hasLibrary = e.dataTransfer.types.includes(LIBRARY_PATTERN_DRAG_TYPE);
+                    if (hasLibrary && onDropLibraryPattern) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "copy";
+                      return;
+                    }
+                    if (onReorderLanes) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                    }
                   }}
                   onDrop={(e) => {
-                    if (!onReorderLanes) return;
                     e.preventDefault();
                     setIsDragging(false);
+                    if (e.dataTransfer.types.includes(LIBRARY_PATTERN_DRAG_TYPE) && onDropLibraryPattern) {
+                      const id = e.dataTransfer.getData(LIBRARY_PATTERN_DRAG_TYPE);
+                      if (id) onDropLibraryPattern(laneId, id);
+                      return;
+                    }
+                    if (!onReorderLanes) return;
                     const draggedId = e.dataTransfer.getData("text/plain");
                     const fromIndex = laneIds.indexOf(draggedId);
                     if (fromIndex === -1 || fromIndex === idx) return;

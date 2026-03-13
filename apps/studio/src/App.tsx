@@ -31,8 +31,11 @@ import {
   createPluginNodeCompiler,
   getPluginPanels,
 } from "@strudel-studio/plugins-sdk";
-import { LaneStack } from "@strudel-studio/ui-components";
-import { GraphCanvas } from "@strudel-studio/ui-components";
+import {
+  LaneStack,
+  GraphCanvas,
+  LIBRARY_PATTERN_DRAG_TYPE,
+} from "@strudel-studio/ui-components";
 import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
@@ -966,7 +969,17 @@ export default function App() {
                     marginBottom: "0.35rem",
                   }}
                 >
-                  <strong>{entry.name}</strong>
+                  <strong
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(LIBRARY_PATTERN_DRAG_TYPE, entry.id);
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
+                    style={{ cursor: "grab" }}
+                    title="Drag onto a lane to apply"
+                  >
+                    {entry.name}
+                  </strong>
                   <span style={{ color: "#666", fontSize: "0.85rem" }}>
                     {entry.content.base.kind}(
                     &quot;{entry.content.base.miniSerialization}
@@ -1534,6 +1547,16 @@ export default function App() {
                 };
               return undefined;
             })()
+          }
+          onDropLibraryPattern={
+            canEditGraph
+              ? (laneId, libraryEntryId) => {
+                  const entry = patternLibrary.find((e) => e.id === libraryEntryId);
+                  if (!entry) return;
+                  const next = replaceLaneContent(graph, laneId, entry.content);
+                  updateSourceFromGraph(next, mutedLanes);
+                }
+              : undefined
           }
         />
       </section>

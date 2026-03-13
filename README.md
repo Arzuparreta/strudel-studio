@@ -12,7 +12,3 @@ pnpm build    # build all packages and app
 pnpm test     # run tests in all workspaces
 pnpm dev      # start the Studio app (Vite dev server)
 ```
-
-## Status
-
-Phase v0.1 scaffold done (Task 1.1). Implementation follows the [roadmap](docs/implementation-roadmap.md).

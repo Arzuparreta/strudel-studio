@@ -84,6 +84,10 @@ export default function App() {
     Record<string, string>
   >({});
   const [haps, setHaps] = useState<import("@strudel-studio/strudel-bridge").Hap[]>([]);
+  const [timelineWindow, setTimelineWindow] = useState<{
+    from: number;
+    to: number;
+  }>({ from: 0, to: 1 });
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(
     null,
   );
@@ -177,6 +181,14 @@ export default function App() {
     }
   }
 
+  /** v0.9.1: Change timeline display window and refresh haps from cache (inspector reads only cache). */
+  function handleTimelineWindowChange(next: { from: number; to: number }) {
+    const from = Math.max(0, Number(next.from));
+    const to = Math.max(from + 0.25, Number(next.to));
+    setTimelineWindow({ from, to });
+    setHaps(hapCache.getHaps({ from, to }));
+  }
+
   /** v0.8: Import current code into the graph (when parse yields AST). */
   function handleImportCodeIntoGraph() {
     const result = parseToAstOrOpaque(source);
@@ -219,11 +231,11 @@ export default function App() {
         queryArc?: (from: number, to: number) => unknown[];
       };
       if (typeof queryable.queryArc === "function") {
-        const window = { from: 0, to: 1 };
-        const rawHaps = queryable.queryArc(window.from, window.to);
+        const evalWindow = { from: 0, to: 1 };
+        const rawHaps = queryable.queryArc(evalWindow.from, evalWindow.to);
         hapCache.clear();
-        hapCache.recordHaps(window, rawHaps, 0);
-        setHaps(hapCache.getHaps(window));
+        hapCache.recordHaps(evalWindow, rawHaps, 0);
+        setHaps(hapCache.getHaps(timelineWindow));
       } else {
         setHaps([]);
       }
@@ -375,8 +387,8 @@ export default function App() {
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Pattern inspector</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
-          Read-only view of recent haps from the evaluated pattern
-          (time window [0, 1]).
+          Read-only view of recent haps from the evaluated pattern.
+          Use the time window below to show a slice of the cache (filled at evaluation for 0–1).
         </p>
         <HapList haps={haps} />
         <div style={{ marginTop: "1rem" }}>
@@ -386,9 +398,84 @@ export default function App() {
           <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
             Events over time. Generate &amp; Play to see the pattern evolve.
           </p>
+          <div
+            style={{
+              marginBottom: "0.5rem",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.85rem",
+            }}
+          >
+            <span style={{ color: "#555" }}>Time window (cycles):</span>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              from
+              <input
+                type="number"
+                min={0}
+                step={0.25}
+                value={timelineWindow.from}
+                onChange={(e) =>
+                  handleTimelineWindowChange({
+                    from: Number(e.target.value),
+                    to: timelineWindow.to,
+                  })
+                }
+                style={{
+                  width: "4rem",
+                  fontFamily: "inherit",
+                  fontSize: "0.85rem",
+                  padding: "0.15rem 0.25rem",
+                }}
+                aria-label="Timeline window start (cycles)"
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              to
+              <input
+                type="number"
+                min={timelineWindow.from + 0.25}
+                step={0.25}
+                value={timelineWindow.to}
+                onChange={(e) =>
+                  handleTimelineWindowChange({
+                    from: timelineWindow.from,
+                    to: Number(e.target.value),
+                  })
+                }
+                style={{
+                  width: "4rem",
+                  fontFamily: "inherit",
+                  fontSize: "0.85rem",
+                  padding: "0.15rem 0.25rem",
+                }}
+                aria-label="Timeline window end (cycles)"
+              />
+            </label>
+            <span style={{ color: "#888" }}>Presets:</span>
+            {[
+              [0, 1],
+              [1, 2],
+              [0, 2],
+            ].map(([from, to]) => (
+              <button
+                key={`${from}-${to}`}
+                type="button"
+                onClick={() => handleTimelineWindowChange({ from, to })}
+                style={{
+                  fontFamily: "inherit",
+                  fontSize: "0.8rem",
+                  padding: "0.15rem 0.4rem",
+                }}
+              >
+                {from}–{to}
+              </button>
+            ))}
+          </div>
           <HapTimeline
             haps={haps}
-            timeWindow={{ from: 0, to: 1 }}
+            timeWindow={timelineWindow}
           />
         </div>
         <div style={{ marginTop: "0.75rem" }}>

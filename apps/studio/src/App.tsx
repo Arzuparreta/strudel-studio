@@ -385,6 +385,7 @@ export default function App() {
                   );
                   updateSourceFromGraph(next);
                 },
+                availableTransforms: Object.keys(TRANSFORM_REGISTRY),
                 selectedTransformForLane: laneTransformSelections,
                 onSelectTransformForLane: (laneId: string, transformName: string) => {
                   setLaneTransformSelections((prev) => ({

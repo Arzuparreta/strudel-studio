@@ -176,10 +176,11 @@ describe("LaneStack", () => {
 
     const calls: Array<{ laneId: string; name: string }> = [];
 
-    const { container } = render(
+    const { container, getByDisplayValue } = render(
       <LaneStack
         graph={graph}
         onChangeBasePattern={() => {}}
+        availableTransforms={["slow", "gain"]}
         selectedTransformForLane={{ lane_drums: "slow" }}
         onSelectTransformForLane={(laneId, name) => {
           calls.push({ laneId, name });
@@ -189,9 +190,10 @@ describe("LaneStack", () => {
 
     const select = container.querySelector("select") as HTMLSelectElement | null;
     expect(select).not.toBeNull();
-    if (select) {
-      fireEvent.change(select, { target: { value: "gain" } });
-    }
+    // Should render options for available transforms.
+    expect(getByDisplayValue("slow")).toBeTruthy();
+
+    fireEvent.change(select as HTMLSelectElement, { target: { value: "gain" } });
 
     expect(calls).toHaveLength(1);
     expect(calls[0]).toEqual({ laneId: "lane_drums", name: "gain" });

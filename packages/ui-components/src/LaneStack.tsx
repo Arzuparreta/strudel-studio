@@ -31,6 +31,8 @@ export interface LaneStackProps {
     transformId: string,
     nextArgs: unknown[],
   ) => void;
+  /** Optional list of available transform names for lane pickers. */
+  availableTransforms?: string[];
   /** Optional per-lane selected transform names (for pickers). */
   selectedTransformForLane?: Record<string, string>;
   /** Optional callback to change the selected transform for a lane. */
@@ -97,6 +99,7 @@ export function LaneStack({
   onAddTransform,
   onReorderTransforms,
   onRemoveTransform,
+  availableTransforms,
   selectedTransformForLane,
   onSelectTransformForLane,
 }: LaneStackProps) {
@@ -308,9 +311,11 @@ export function LaneStack({
                       }}
                     >
                       <option value="">(default)</option>
-                      {/* The actual option list is controlled by the parent; when
-                          an empty value is selected, the parent can fall back to
-                          its own default choice. */}
+                      {availableTransforms?.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
                     </select>
                   )}
                   {onAddTransform && (

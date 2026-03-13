@@ -102,6 +102,22 @@ importers:
         specifier: ^2.1.6
         version: 2.1.9
 
+  packages/strudel-parser:
+    dependencies:
+      '@strudel-studio/pattern-ast':
+        specifier: workspace:*
+        version: link:../pattern-ast
+      acorn:
+        specifier: ^8.14.0
+        version: 8.16.0
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.6
+        version: 2.1.9
+
 packages:
 
   '@babel/code-frame@7.29.0':

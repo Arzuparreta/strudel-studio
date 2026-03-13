@@ -56,6 +56,19 @@ function getLaneAndChain(
   return null;
 }
 
+function deriveVoicesAndSteps(mini: string): { voices: string[]; steps: number } {
+  const tokens = mini.trim().length === 0 ? [] : mini.trim().split(/\s+/);
+  const voices: string[] = [];
+  for (const token of tokens) {
+    if (token === "~") continue;
+    if (!voices.includes(token)) {
+      voices.push(token);
+    }
+  }
+  const steps = tokens.length > 0 ? tokens.length : 4;
+  return { voices, steps };
+}
+
 /**
  * Renders a PatternGraph as stacked lanes (one row per top-level track).
  * For a parallel root, each child is a row; for a single chain, one row.
@@ -122,6 +135,9 @@ export function LaneStack({
         const { lane, chain } = laneAndChain;
         // @ts-expect-error - name is an optional UI-only field on LaneNode
         const laneName: string = (lane as any).name ?? lane.id;
+        const { voices, steps } = deriveVoicesAndSteps(
+          chain.base.miniSerialization,
+        );
 
         return (
           <div
@@ -194,7 +210,8 @@ export function LaneStack({
                   />
                   <PatternGrid
                     mini={chain.base.miniSerialization}
-                    steps={4}
+                    steps={steps}
+                    voices={voices}
                     onChangeMini={(next) => onChangeBasePattern(lane.id, next)}
                   />
                 </>

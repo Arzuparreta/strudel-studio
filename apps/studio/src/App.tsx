@@ -9,6 +9,7 @@ import {
   deleteLane,
   renameLane,
   reorderParallelLanes,
+  reorderSerialChildren,
   changeLaneBasePattern,
   addTransformToLane,
   setLaneCycleHint,
@@ -554,7 +555,9 @@ export default function App() {
               updateSourceFromGraph(next);
             }}
           >
-            Add lane under parallel root
+            {graph.nodes.find((n) => n.id === graph.root)?.type === "serial"
+              ? "Add lane under serial root"
+              : "Add lane under parallel root"}
           </button>
           <button
             type="button"
@@ -678,8 +681,10 @@ export default function App() {
           })()}
           {(() => {
             const root = graph.nodes.find((n) => n.id === graph.root);
+            const isComposition =
+              root?.type === "parallel" || root?.type === "serial";
             const order =
-              root && root.type === "parallel" && (root as { order?: string[] }).order
+              root && isComposition && (root as { order?: string[] }).order
                 ? (root as { order: string[] }).order
                 : [];
             const idx =
@@ -694,6 +699,12 @@ export default function App() {
             const canMoveUp = canEditGraph && isLaneSelected && idx > 0;
             const canMoveDown =
               canEditGraph && isLaneSelected && idx >= 0 && idx < order.length - 1;
+            const reorder =
+              root?.type === "serial"
+                ? (g: PatternGraph, newOrder: string[]) =>
+                    reorderSerialChildren(g, newOrder)
+                : (g: PatternGraph, newOrder: string[]) =>
+                    reorderParallelLanes(g, newOrder);
             return (
               <>
                 <button
@@ -705,7 +716,7 @@ export default function App() {
                     const tmp = newOrder[idx - 1]!;
                     newOrder[idx - 1] = newOrder[idx]!;
                     newOrder[idx] = tmp;
-                    const next = reorderParallelLanes(graph, newOrder);
+                    const next = reorder(graph, newOrder);
                     updateSourceFromGraph(next);
                   }}
                 >
@@ -720,7 +731,7 @@ export default function App() {
                     const tmp = newOrder[idx + 1]!;
                     newOrder[idx + 1] = newOrder[idx]!;
                     newOrder[idx] = tmp;
-                    const next = reorderParallelLanes(graph, newOrder);
+                    const next = reorder(graph, newOrder);
                     updateSourceFromGraph(next);
                   }}
                 >
@@ -742,12 +753,20 @@ export default function App() {
           onSelectNode={(id) => setSelectedGraphNodeId(id)}
           onReorderLanes={
             canEditGraph &&
-            graph.nodes.find((n) => n.id === graph.root)?.type === "parallel"
-              ? (newOrder: string[]) => {
+            (() => {
+              const root = graph.nodes.find((n) => n.id === graph.root);
+              if (root?.type === "parallel")
+                return (newOrder: string[]) => {
                   const next = reorderParallelLanes(graph, newOrder);
                   updateSourceFromGraph(next);
-                }
-              : undefined
+                };
+              if (root?.type === "serial")
+                return (newOrder: string[]) => {
+                  const next = reorderSerialChildren(graph, newOrder);
+                  updateSourceFromGraph(next);
+                };
+              return undefined;
+            })()
           }
         />
       </section>

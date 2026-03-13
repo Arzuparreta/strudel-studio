@@ -344,6 +344,11 @@ export function LaneStack({
                 {chain.methods.map((m, idx) => (
                   <div
                     key={m.id}
+                    aria-label={
+                      onReorderTransforms && chain.methods.length > 1
+                        ? `Transform .${m.name}(${m.args.map(String).join(", ")}), draggable to reorder`
+                        : undefined
+                    }
                     draggable={!!onReorderTransforms}
                     onDragStart={(event) => {
                       if (!onReorderTransforms) return;
@@ -375,6 +380,10 @@ export function LaneStack({
                       display: "flex",
                       alignItems: "center",
                       gap: "0.25rem",
+                      cursor:
+                        onReorderTransforms && chain.methods.length > 1
+                          ? "grab"
+                          : undefined,
                     }}
                   >
                     <code style={{ flex: 1 }}>

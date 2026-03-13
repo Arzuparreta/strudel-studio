@@ -26,6 +26,7 @@ export {
   deleteLane,
   renameLane,
   reorderParallelLanes,
+  reorderSerialChildren,
   setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,

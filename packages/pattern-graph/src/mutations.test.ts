@@ -5,6 +5,7 @@ import {
   deleteLane,
   renameLane,
   reorderParallelLanes,
+  reorderSerialChildren,
   setLaneCycleHint,
   changeLaneBasePattern,
   addTransformToLane,
@@ -185,7 +186,7 @@ describe("PatternGraph lane mutations", () => {
     expect(chainUpdated.methods[0].args).toEqual([4]);
   });
 
-  it("validatePatternGraph rejects non-parallel root", () => {
+  it("validatePatternGraph rejects non-composition root", () => {
     const bad: PatternGraph = {
       graphVersion: 2,
       astVersion: 1,
@@ -207,8 +208,57 @@ describe("PatternGraph lane mutations", () => {
     };
 
     expect(() => validatePatternGraph(bad)).toThrow(
-      /root must be type "parallel"/,
+      /root must be parallel or serial composition/,
     );
+  });
+
+  it("addLane and deleteLane work with serial root", () => {
+    const serialBase: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_serial",
+      nodes: [{ id: "root_serial", type: "serial", order: [] }],
+      edges: [],
+    };
+
+    const { graph: withLane, laneId } = addLane(serialBase, {
+      basePatternMini: "bd",
+    });
+    const root = withLane.nodes.find((n) => n.id === withLane.root) as {
+      order?: string[];
+    };
+    expect(root.order).toContain(laneId);
+    expect(() => validatePatternGraph(withLane)).not.toThrow();
+
+    const afterDelete = deleteLane(withLane, laneId);
+    expect(afterDelete.nodes.find((n) => n.id === laneId)).toBeUndefined();
+  });
+
+  it("reorderSerialChildren updates serial root order", () => {
+    const serialBase: PatternGraph = {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_serial",
+      nodes: [{ id: "root_serial", type: "serial", order: [] }],
+      edges: [],
+    };
+    const { graph: g1, laneId: id1 } = addLane(serialBase, {
+      basePatternMini: "bd",
+    });
+    const { graph: g2, laneId: id2 } = addLane(g1, { basePatternMini: "sd" });
+    const rootBefore = g2.nodes.find((n) => n.id === g2.root) as {
+      type: string;
+      order: string[];
+    };
+    expect(rootBefore.type).toBe("serial");
+    expect(rootBefore.order).toEqual([id1, id2]);
+
+    const reordered = reorderSerialChildren(g2, [id2, id1]);
+    const rootAfter = reordered.nodes.find((n) => n.id === reordered.root) as {
+      order: string[];
+    };
+    expect(rootAfter.order).toEqual([id2, id1]);
+    expect(() => validatePatternGraph(reordered)).not.toThrow();
   });
 });
 

@@ -50,14 +50,26 @@ function asComposition(node: GraphNode): CompositionNode {
   return node;
 }
 
-function getRootComposition(graph: PatternGraph): CompositionNode {
+/** Root node when it is a composition (parallel or serial). */
+function getCompositionRoot(graph: PatternGraph): CompositionNode {
   const rootNode = findNode(graph, graph.root);
-  if (rootNode.type !== "parallel") {
+  if (rootNode.type !== "parallel" && rootNode.type !== "serial") {
     throw new Error(
-      `PatternGraph: lane editor requires parallel root, got ${rootNode.type}`,
+      `PatternGraph: composition root required (parallel or serial), got ${rootNode.type}`,
     );
   }
   return rootNode as CompositionNode;
+}
+
+/** @deprecated Use getCompositionRoot for both parallel and serial. */
+function getRootComposition(graph: PatternGraph): CompositionNode {
+  const root = getCompositionRoot(graph);
+  if (root.type !== "parallel") {
+    throw new Error(
+      `PatternGraph: parallel root required, got ${root.type}`,
+    );
+  }
+  return root;
 }
 
 function collectIds(graph: PatternGraph): Set<string> {
@@ -85,7 +97,8 @@ function chainForLane(graph: PatternGraph, laneId: LaneId): TransformChainNode {
 }
 
 /**
- * Add a new lane with its own transformChain and attach it to the parallel root.
+ * Add a new lane with its own transformChain and attach it to the composition root.
+ * Works for both parallel and serial roots.
  *
  * - Generates deterministic ids for lane and chain.
  * - Appends the lane id to root.order (creating it if needed).
@@ -96,7 +109,7 @@ export function addLane(
 ): { graph: PatternGraph; laneId: LaneId } {
   const cloned = cloneGraph(graph);
   const ids = collectIds(cloned);
-  const root = getRootComposition(cloned);
+  const root = getCompositionRoot(cloned);
 
   const laneId = nextId("lane_", ids);
   ids.add(laneId);
@@ -144,14 +157,15 @@ export function addLane(
 
 /**
  * Delete a lane and its associated transformChain from the graph, and detach
- * it from the parallel root. Throws if the lane does not exist.
+ * it from the composition root. Works for both parallel and serial roots.
+ * Throws if the lane does not exist.
  */
 export function deleteLane(
   graph: PatternGraph,
   laneId: LaneId,
 ): PatternGraph {
   const cloned = cloneGraph(graph);
-  const root = getRootComposition(cloned);
+  const root = getCompositionRoot(cloned);
 
   const lane = laneForId(cloned, laneId);
   const chainId = lane.head;
@@ -198,6 +212,51 @@ export function reorderParallelLanes(
     if (!currentSet.has(id)) {
       throw new Error(
         `PatternGraph: reorderParallelLanes unknown or duplicate id: ${id}`,
+      );
+    }
+  }
+
+  const updatedRoot: CompositionNode = {
+    ...root,
+    order: [...newOrder],
+  };
+  const rootIndex = cloned.nodes.findIndex((n) => n.id === root.id);
+  cloned.nodes = [
+    ...cloned.nodes.slice(0, rootIndex),
+    updatedRoot,
+    ...cloned.nodes.slice(rootIndex + 1),
+  ];
+  return cloned;
+}
+
+/**
+ * Reorder children under a serial root. newOrder must be a permutation of
+ * the current root.order. Throws if root is not serial or newOrder is invalid.
+ */
+export function reorderSerialChildren(
+  graph: PatternGraph,
+  newOrder: string[],
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const rootNode = findNode(cloned, cloned.root);
+  if (rootNode.type !== "serial") {
+    throw new Error(
+      `PatternGraph: reorderSerialChildren requires serial root, got ${rootNode.type}`,
+    );
+  }
+  const root = rootNode as CompositionNode;
+  const current = root.order ?? [];
+
+  if (newOrder.length !== current.length) {
+    throw new Error(
+      "PatternGraph: reorderSerialChildren newOrder length must match root.order",
+    );
+  }
+  const currentSet = new Set(current);
+  for (const id of newOrder) {
+    if (!currentSet.has(id)) {
+      throw new Error(
+        `PatternGraph: reorderSerialChildren unknown or duplicate id: ${id}`,
       );
     }
   }
@@ -430,7 +489,7 @@ export function reorderLaneTransforms(
  *
  * Rules:
  * - exactly one root node
- * - root must be a parallel composition
+ * - root must be a parallel or serial composition
  * - lanes must reference valid transform chains
  * - no unreachable (orphan) nodes
  */
@@ -443,9 +502,9 @@ export function validatePatternGraph(graph: PatternGraph): void {
   }
 
   const root = rootNodes[0]!;
-  if (root.type !== "parallel") {
+  if (root.type !== "parallel" && root.type !== "serial") {
     throw new Error(
-      `PatternGraph: root must be type "parallel" for lane editor, got ${root.type}`,
+      `PatternGraph: root must be parallel or serial composition, got ${root.type}`,
     );
   }
 

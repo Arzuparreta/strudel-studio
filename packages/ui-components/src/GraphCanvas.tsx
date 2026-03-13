@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { PatternGraph, GraphNode } from "@strudel-studio/pattern-graph";
 import { getNodeLabel } from "./laneStackUtils.js";
 
@@ -23,6 +24,7 @@ export function GraphCanvas({
   onSelectNode,
   onReorderLanes,
 }: GraphCanvasProps) {
+  const [isDragging, setIsDragging] = useState(false);
   const nodesById = new Map<string, GraphNode>(
     graph.nodes.map((n) => [n.id, n]),
   );
@@ -75,6 +77,9 @@ export function GraphCanvas({
         }}
       >
         <div
+          role={onSelectNode ? "button" : undefined}
+          aria-label={`Composition root: ${getNodeLabel(graph, root.id)}`}
+          tabIndex={onSelectNode ? 0 : undefined}
           style={{
             padding: "0.3rem 0.6rem",
             borderRadius: "999px",
@@ -90,20 +95,32 @@ export function GraphCanvas({
               onSelectNode(root.id);
             }
           }}
+          onKeyDown={(e) => {
+            if (onSelectNode && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              onSelectNode(root.id);
+            }
+          }}
         >
           {getNodeLabel(graph, root.id)}
         </div>
 
         {laneIds.length > 0 && (
-          <div
-            style={{
-              width: "2px",
-              minHeight: "12px",
-              backgroundColor: "#bbb",
-              flexShrink: 0,
-            }}
+          <svg
+            width="100%"
+            height="14"
+            viewBox="0 0 100 14"
+            preserveAspectRatio="none"
+            style={{ display: "block", flexShrink: 0 }}
             aria-hidden
-          />
+          >
+            <path
+              d="M 50 0 L 50 14 M 0 14 L 100 14"
+              fill="none"
+              stroke="#999"
+              strokeWidth="1.5"
+            />
+          </svg>
         )}
 
         <div
@@ -134,12 +151,17 @@ export function GraphCanvas({
               return (
                 <div
                   key={laneId}
+                  role={onSelectNode ? "button" : undefined}
+                  aria-label={`Lane ${laneId}${chainNode && chainNode.type === "transformChain" ? `: ${chainNode.base.kind}("${chainNode.base.miniSerialization}")` : ""}`}
+                  tabIndex={onSelectNode ? 0 : undefined}
                   draggable={canDrag}
                   onDragStart={(e) => {
                     if (!onReorderLanes) return;
+                    setIsDragging(true);
                     e.dataTransfer.setData("text/plain", laneId);
                     e.dataTransfer.effectAllowed = "move";
                   }}
+                  onDragEnd={() => setIsDragging(false)}
                   onDragOver={(e) => {
                     if (!onReorderLanes) return;
                     e.preventDefault();
@@ -148,6 +170,7 @@ export function GraphCanvas({
                   onDrop={(e) => {
                     if (!onReorderLanes) return;
                     e.preventDefault();
+                    setIsDragging(false);
                     const draggedId = e.dataTransfer.getData("text/plain");
                     const fromIndex = laneIds.indexOf(draggedId);
                     if (fromIndex === -1 || fromIndex === idx) return;
@@ -173,10 +196,16 @@ export function GraphCanvas({
                     display: "flex",
                     flexDirection: "column",
                     gap: "0.25rem",
-                    cursor: canDrag ? "grab" : undefined,
+                    cursor: canDrag ? (isDragging ? "grabbing" : "grab") : undefined,
                   }}
                   onClick={() => {
                     if (onSelectNode) {
+                      onSelectNode(laneId);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (onSelectNode && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
                       onSelectNode(laneId);
                     }
                   }}

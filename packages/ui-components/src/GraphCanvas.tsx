@@ -106,6 +106,7 @@ export function GraphCanvas({
               }
               const chainNode = nodesById.get(laneNode.head);
 
+              const isSelected = selectedNodeId === laneId;
               return (
                 <div
                   key={laneId}
@@ -114,20 +115,18 @@ export function GraphCanvas({
                     maxWidth: "14rem",
                     padding: "0.5rem 0.75rem",
                     borderRadius: "6px",
-                    border: "1px solid #ccc",
+                    border: isSelected
+                      ? "1px solid #007acc"
+                      : "1px solid #ccc",
                     backgroundColor: "#fff",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                    boxShadow: isSelected
+                      ? "0 0 0 2px rgba(0,122,204,0.15)"
+                      : "0 1px 2px rgba(0,0,0,0.04)",
                     fontFamily: "monospace",
                     fontSize: "0.8rem",
                     display: "flex",
                     flexDirection: "column",
                     gap: "0.25rem",
-                    borderColor:
-                      selectedNodeId === laneId ? "#007acc" : "#ccc",
-                    boxShadow:
-                      selectedNodeId === laneId
-                        ? "0 0 0 2px rgba(0,122,204,0.15)"
-                        : "0 1px 2px rgba(0,0,0,0.04)",
                   }}
                   onClick={() => {
                     if (onSelectNode) {

@@ -23,6 +23,8 @@ import {
   getAvailableTransformNames,
   getTransformSpec,
   coerceTransformArgs,
+  listPluginIds,
+  getPlugin,
 } from "@strudel-studio/plugins-sdk";
 import { LaneStack } from "@strudel-studio/ui-components";
 import { GraphCanvas } from "@strudel-studio/ui-components";
@@ -712,6 +714,34 @@ export default function App() {
             </span>
           )}
         </div>
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Plugins (v1.0)</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Loaded plugins provide custom transforms in the &quot;+ Add transform&quot; picker.
+        </p>
+        {listPluginIds().length === 0 ? (
+          <p style={{ fontSize: "0.85rem", color: "#888" }}>No plugins loaded.</p>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.9rem" }}>
+            {listPluginIds().map((id) => {
+              const p = getPlugin(id);
+              const name = p?.manifest.name ?? id;
+              const version = p?.manifest.version ?? "—";
+              return (
+                <li key={id}>
+                  <strong>{name}</strong> {version}
+                  {p?.manifest.name !== id && (
+                    <span style={{ color: "#666", marginLeft: "0.25rem" }}>
+                      ({id})
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>

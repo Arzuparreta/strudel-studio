@@ -37,6 +37,8 @@ export {
   updateLaneTransformArgs,
   removeTransformFromLane,
   reorderLaneTransforms,
+  replaceLaneContent,
   validatePatternGraph,
 } from "./mutations.js";
+export type { LibraryPatternContent } from "./mutations.js";
 

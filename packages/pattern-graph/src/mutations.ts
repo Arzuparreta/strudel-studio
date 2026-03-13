@@ -441,6 +441,49 @@ export function removeTransformFromLane(
 }
 
 /**
+ * Content of a lane (base pattern + transform methods) suitable for saving to
+ * a pattern library or applying to another lane. No graph node ids.
+ * @see docs/project-roadmap.md v1.1 — Pattern Library
+ */
+export interface LibraryPatternContent {
+  base: { kind: "s" | "note"; miniSerialization: string };
+  methods: { name: string; args: unknown[] }[];
+}
+
+/**
+ * Replace a lane's transform chain content with the given base and methods.
+ * Method ids are generated so they are unique in the graph.
+ * Used when applying a pattern from the library to a lane.
+ */
+export function replaceLaneContent(
+  graph: PatternGraph,
+  laneId: LaneId,
+  content: LibraryPatternContent,
+): PatternGraph {
+  const cloned = cloneGraph(graph);
+  const chain = chainForLane(cloned, laneId);
+  const methodIds = new Set(chain.methods.map((m) => m.id));
+
+  const newMethods = content.methods.map(({ name, args }) => {
+    const id = nextId("m_", methodIds);
+    methodIds.add(id);
+    return { id, name, args };
+  });
+
+  const updatedChain: TransformChainNode = {
+    ...chain,
+    base: { ...content.base },
+    methods: newMethods,
+  };
+
+  cloned.nodes = cloned.nodes.map((n) =>
+    n.id === chain.id ? updatedChain : n,
+  );
+
+  return cloned;
+}
+
+/**
  * Reorder transforms in a lane's transformChain based on a new id ordering.
  * The newOrder array must be a permutation of the existing transform ids.
  */

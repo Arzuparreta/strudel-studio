@@ -12,6 +12,7 @@ import {
   updateLaneTransformArgs,
   removeTransformFromLane,
   reorderLaneTransforms,
+  replaceLaneContent,
   validatePatternGraph,
 } from "./mutations.js";
 
@@ -210,6 +211,41 @@ describe("PatternGraph lane mutations", () => {
     ) as any;
 
     expect(chainUpdated.methods[0].args).toEqual([4]);
+  });
+
+  it("replaceLaneContent sets lane base and methods from library content (v1.1)", () => {
+    const { graph, laneId } = addLane(baseGraph);
+    const withSlow = addTransformToLane(graph, laneId, {
+      name: "slow",
+      args: [2],
+    });
+
+    const libraryContent = {
+      base: { kind: "s" as const, miniSerialization: "hh*8 cp" },
+      methods: [
+        { name: "gain", args: [0.7] },
+        { name: "room", args: [0.5] },
+      ],
+    };
+
+    const replaced = replaceLaneContent(withSlow, laneId, libraryContent);
+    const lane = replaced.nodes.find(
+      (n) => n.id === laneId && n.type === "lane",
+    )!;
+    const chain = replaced.nodes.find(
+      (n) => n.id === (lane as any).head && n.type === "transformChain",
+    ) as any;
+
+    expect(chain.base.kind).toBe("s");
+    expect(chain.base.miniSerialization).toBe("hh*8 cp");
+    expect(chain.methods).toHaveLength(2);
+    expect(chain.methods.map((m: any) => m.name)).toEqual(["gain", "room"]);
+    expect(chain.methods[0].args).toEqual([0.7]);
+    expect(chain.methods[1].args).toEqual([0.5]);
+    chain.methods.forEach((m: { id: string }) => {
+      expect(m.id).toBeDefined();
+      expect(typeof m.id).toBe("string");
+    });
   });
 
   it("validatePatternGraph rejects non-composition root", () => {

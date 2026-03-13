@@ -17,8 +17,10 @@ import {
   setLaneCycleHint,
   removeTransformFromLane,
   reorderLaneTransforms,
+  replaceLaneContent,
   validatePatternGraph,
 } from "@strudel-studio/pattern-graph";
+import type { LibraryPatternContent } from "@strudel-studio/pattern-graph";
 import { updateLaneTransformArgs } from "@strudel-studio/pattern-graph";
 import {
   getAvailableTransformNames,
@@ -35,6 +37,67 @@ import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
 import "./plugins";
+
+const PATTERN_LIBRARY_STORAGE_KEY = "strudel-studio-pattern-library";
+
+export interface PatternLibraryEntry {
+  id: string;
+  name: string;
+  content: LibraryPatternContent;
+}
+
+function loadPatternLibrary(): PatternLibraryEntry[] {
+  try {
+    const raw = localStorage.getItem(PATTERN_LIBRARY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (e): e is PatternLibraryEntry =>
+        e &&
+        typeof e === "object" &&
+        typeof (e as PatternLibraryEntry).id === "string" &&
+        typeof (e as PatternLibraryEntry).name === "string" &&
+        (e as PatternLibraryEntry).content != null &&
+        typeof (e as PatternLibraryEntry).content.base === "object" &&
+        typeof (e as PatternLibraryEntry).content.base?.miniSerialization === "string",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function savePatternLibrary(entries: PatternLibraryEntry[]): void {
+  try {
+    localStorage.setItem(PATTERN_LIBRARY_STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // ignore
+  }
+}
+
+/** Extract lane content (base + methods) for saving to library. */
+function getLaneContent(
+  graph: PatternGraph,
+  laneId: string,
+): LibraryPatternContent | null {
+  const lane = graph.nodes.find(
+    (n) => n.id === laneId && n.type === "lane",
+  ) as { head: string } | undefined;
+  if (!lane) return null;
+  const chain = graph.nodes.find(
+    (n) => n.id === lane.head && n.type === "transformChain",
+  ) as
+    | {
+        base: { kind: "s" | "note"; miniSerialization: string };
+        methods: { name: string; args: unknown[] }[];
+      }
+    | undefined;
+  if (!chain) return null;
+  return {
+    base: { ...chain.base },
+    methods: chain.methods.map((m) => ({ name: m.name, args: [...m.args] })),
+  };
+}
 
 /** Demo multi-track graph (parallel root, two lanes) for Task 3.11. */
 const demoGraph: PatternGraph = {
@@ -97,6 +160,17 @@ export default function App() {
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(
     null,
   );
+
+  const [patternLibrary, setPatternLibrary] = useState<PatternLibraryEntry[]>(
+    loadPatternLibrary,
+  );
+  const setPatternLibraryPersisted = (next: PatternLibraryEntry[] | ((prev: PatternLibraryEntry[]) => PatternLibraryEntry[])) => {
+    setPatternLibrary((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      savePatternLibrary(resolved);
+      return resolved;
+    });
+  };
 
   /** v0.9.2: ref to last evaluated pattern for one-shot scrubbed queryArc (architecture §9). */
   const lastPatternRef = useRef<{
@@ -779,6 +853,117 @@ export default function App() {
             ))}
           </div>
         )}
+      </section>
+
+      <section style={{ marginTop: "1.5rem" }}>
+        <h2>Pattern library (v1.1)</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Save lane content as reusable patterns and apply them to lanes. Select a
+          lane in the graph to save or apply.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <button
+            type="button"
+            disabled={
+              !selectedGraphNodeId ||
+              !graph.nodes.some(
+                (n) => n.id === selectedGraphNodeId && n.type === "lane",
+              )
+            }
+            onClick={() => {
+              if (
+                !selectedGraphNodeId ||
+                !graph.nodes.some(
+                  (n) => n.id === selectedGraphNodeId && n.type === "lane",
+                )
+              )
+                return;
+              const content = getLaneContent(graph, selectedGraphNodeId);
+              if (!content) return;
+              const name =
+                window.prompt("Name for this pattern", "My pattern")?.trim() ||
+                "";
+              if (!name) return;
+              const id = `lib_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+              setPatternLibraryPersisted((prev) => [
+                ...prev,
+                { id, name, content },
+              ]);
+            }}
+          >
+            Save selected lane to library
+          </button>
+          {patternLibrary.length === 0 ? (
+            <p style={{ fontSize: "0.85rem", color: "#888" }}>
+              No patterns saved. Select a lane and click &quot;Save selected lane
+              to library&quot; to add one.
+            </p>
+          ) : (
+            <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.9rem" }}>
+              {patternLibrary.map((entry) => (
+                <li
+                  key={entry.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.35rem",
+                  }}
+                >
+                  <strong>{entry.name}</strong>
+                  <span style={{ color: "#666", fontSize: "0.85rem" }}>
+                    {entry.content.base.kind}(
+                    &quot;{entry.content.base.miniSerialization}
+                    &quot;)
+                    {entry.content.methods.length > 0 &&
+                      entry.content.methods
+                        .map((m) => `.${m.name}(${JSON.stringify(m.args).slice(1, -1)})`)
+                        .join("")}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={
+                      !selectedGraphNodeId ||
+                      !graph.nodes.some(
+                        (n) =>
+                          n.id === selectedGraphNodeId && n.type === "lane",
+                      )
+                    }
+                    onClick={() => {
+                      if (
+                        !selectedGraphNodeId ||
+                        !graph.nodes.some(
+                          (n) =>
+                            n.id === selectedGraphNodeId && n.type === "lane",
+                        )
+                      )
+                        return;
+                      const next = replaceLaneContent(
+                        graph,
+                        selectedGraphNodeId,
+                        entry.content,
+                      );
+                      updateSourceFromGraph(next);
+                    }}
+                  >
+                    Apply to selected lane
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${entry.name} from library`}
+                    onClick={() => {
+                      setPatternLibraryPersisted((prev) =>
+                        prev.filter((e) => e.id !== entry.id),
+                      );
+                    }}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>

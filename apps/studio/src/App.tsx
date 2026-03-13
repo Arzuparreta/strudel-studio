@@ -51,7 +51,7 @@ const demoGraph: PatternGraph = {
       id: "n_drums",
       type: "transformChain",
       base: { kind: "s", miniSerialization: "bd ~ sd ~" },
-      methods: [{ id: "m1", name: "bank", args: ["tr909"] }],
+      methods: [],
     },
     {
       id: "lane_bass",
@@ -61,7 +61,7 @@ const demoGraph: PatternGraph = {
     {
       id: "n_bass",
       type: "transformChain",
-      base: { kind: "s", miniSerialization: "eb2 buddy" },
+      base: { kind: "s", miniSerialization: "arpy ~ cp" },
       methods: [],
     },
   ],

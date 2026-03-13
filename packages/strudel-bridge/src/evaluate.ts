@@ -19,7 +19,9 @@ async function loadStrudelWeb(): Promise<StrudelWebModule> {
         const g = globalThis as Record<string, any>;
         if (typeof g.samples === "function") {
           g.samples("github:tidalcycles/dirt-samples");
-          g.samples("github:ritchse/tidal-drum-machines");
+          // Drum banks (e.g. .bank("tr909")) need a repo that provides strudel.json;
+          // ritchse/tidal-drum-machines has no strudel.json (404), so we only load
+          // dirt-samples. Patterns without .bank() use dirt-samples and play.
         }
       },
     });

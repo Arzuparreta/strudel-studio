@@ -353,11 +353,35 @@ export default function App() {
                   transformId: string,
                   nextArgs: unknown[],
                 ) => {
+                  // Look up the current transform name so we can coerce args
+                  // using registry metadata before updating the graph.
+                  const laneNode = graph.nodes.find(
+                    (n) => n.id === laneId && n.type === "lane",
+                  ) as any;
+                  const chainNode = laneNode
+                    ? graph.nodes.find(
+                        (n) =>
+                          n.id === laneNode.head && n.type === "transformChain",
+                      )
+                    : undefined;
+                  const method = chainNode
+                    ? (chainNode as any).methods.find(
+                        (m: { id: string }) => m.id === transformId,
+                      )
+                    : undefined;
+
+                  const spec =
+                    method && typeof method.name === "string"
+                      ? getTransformSpec(method.name)
+                      : undefined;
+                  const coercedArgs =
+                    spec != null ? coerceTransformArgs(spec, nextArgs) : nextArgs;
+
                   const next = updateLaneTransformArgs(
                     graph,
                     laneId,
                     transformId,
-                    nextArgs,
+                    coercedArgs,
                   );
                   updateSourceFromGraph(next);
                 },

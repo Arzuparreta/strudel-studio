@@ -29,9 +29,7 @@ import { GraphCanvas } from "@strudel-studio/ui-components";
 import { HapList, HapTimeline } from "@strudel-studio/pattern-inspector";
 import type { PatternGraph } from "@strudel-studio/pattern-graph";
 import { MonacoEditor } from "./monaco";
-
-// v1.0: load plugins so they register transforms and optional hooks.
-import "@strudel-studio/plugin-euclidean";
+import "./plugins";
 
 /** Demo multi-track graph (parallel root, two lanes) for Task 3.11. */
 const demoGraph: PatternGraph = {

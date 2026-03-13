@@ -78,6 +78,36 @@ ui-components → strudel-bridge, code-generator
 | 1.9 | **Studio shell** | Vite app; one pane Monaco showing generated code; button “Generate & Play” from hardcoded or minimal AST. | Running app in browser | apps/studio | S |
 | 1.10 | **Thin graph adapter (optional)** | In-memory only: build minimal `transformChain` → existing codegen input (no graph package yet). | One function `graphToAst(thin)` or skip if timeboxed | apps/studio or pattern-ast | S–M |
 
+---
+
+## Strudel Studio Implementation Step 1 — Recommended scope (quality-first)
+
+This block is the **formal Step 1** on the roadmap: small, reviewable, and safe. It locks the **contract** before codegen and bridge work so logic and generation stay deterministic.
+
+### Task numbers (quick reference)
+
+| # | Short name | What it is |
+|---|------------|------------|
+| **1.2** | pattern-ast types | TypeScript IR: `TransformChain`, calls, literals; `astVersion: 1`; stable `id` on nodes. |
+| **1.3** | Canonical method order | Single ordered list per `astVersion` (e.g. `bank`, `slow`, `gain`, …) so emission order is never ambiguous. |
+| **1.4** | Codegen single spine | `generate(ast) => string`; walk AST and emit `s("...").method(args)...` with escaping rules. |
+| **1.5** | Golden tests | AST JSON fixtures → snapshot strings; CI fails on unexpected diffs. |
+
+**Suggested bundle for Step 1:** **1.2 + 1.3** together (types + order) as one milestone; **1.4 then 1.5** as the next—codegen without golden tests drifts; golden tests without a frozen IR are brittle.
+
+### JSON fixture scope
+
+- Aim for **1–2 nodes per type** in each fixture—enough to exercise structure and ordering **without** building large graphs prematurely.
+- Prefer **multiple small fixtures** over one large document so failures point to a specific shape.
+- Tasks **1.4 / 1.5** stay meaningful when fixtures are minimal; expand only when adding new node kinds or emit branches.
+
+### Optional micro-step (before or with 1.2)
+
+- Add a **human-readable contract** in-repo (short markdown or JSON in `docs/`, or a comment-heavy example) that states: allowed base kinds for v0.1, whitelisted chain methods, and **one canonical example string** you expect codegen to produce.
+- **Why:** Gives reviewers and contributors a **single source of expectations** before diving into TypeScript; reduces friction on the first PR that introduces `pattern-ast` and canonical order.
+
+---
+
 ## Package / file structure (v0.1)
 
 ```

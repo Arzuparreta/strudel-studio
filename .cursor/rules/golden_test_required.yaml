@@ -1,0 +1,3 @@
+description: >
+  Any generated code must have a golden test snapshot to ensure
+  determinism and CI fail-fast on drift.

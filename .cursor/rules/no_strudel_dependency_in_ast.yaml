@@ -1,0 +1,2 @@
+description: >
+  `pattern-ast` package and AST fixtures must not depend on Strudel runtime.

@@ -1,0 +1,24 @@
+{
+  "name": "strudel-studio",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Visual music editor built on Strudel",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "eslint .",
+    "dev": "pnpm --filter studio dev"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.14.2",
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0"
+  }
+}

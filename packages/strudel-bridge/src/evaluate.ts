@@ -146,13 +146,21 @@ export async function getSoundsForBank(bankId: string): Promise<string[]> {
 
     const keys: string[] =
       raw instanceof Map ? Array.from((raw as Map<string, unknown>).keys()) : Object.keys(raw as Record<string, unknown>);
-    const prefix = REVERSE_ALIAS[bankId] ?? bankId;
-    const prefixWithUnderscore = `${prefix}_`;
+    // soundMap keys are lowercase (registerSound lowercases: key.toLowerCase())
+    // Try both canonical prefix (RolandTR808) and alias (TR808) since aliasBank adds both
+    const canonical = (REVERSE_ALIAS[bankId] ?? bankId).toLowerCase();
+    const alias = bankId.toLowerCase();
+    const prefixes = [...new Set([canonical, alias])];
     const suffixes = new Set<string>();
     for (const k of keys) {
-      if (typeof k === "string" && k.startsWith(prefixWithUnderscore)) {
-        const suffix = k.slice(prefixWithUnderscore.length);
-        if (suffix) suffixes.add(suffix);
+      if (typeof k !== "string") continue;
+      for (const p of prefixes) {
+        const prefixWithUnderscore = `${p}_`;
+        if (k.startsWith(prefixWithUnderscore)) {
+          const suffix = k.slice(prefixWithUnderscore.length);
+          if (suffix) suffixes.add(suffix);
+          break;
+        }
       }
     }
     return [...suffixes].sort();

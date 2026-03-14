@@ -555,20 +555,45 @@ export default function App() {
       <h1>Strudel Studio</h1>
       <p>AST version: {astVersion}</p>
 
+      <div
+        style={{
+          marginTop: "1rem",
+          marginBottom: "1.5rem",
+          padding: "0.75rem 1rem",
+          background: "#f5f5f5",
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          flexWrap: "wrap",
+        }}
+        role="toolbar"
+        aria-label="Transport"
+      >
+        <button
+          type="button"
+          onClick={handleEvaluate}
+          style={{
+            padding: "0.5rem 1.25rem",
+            fontSize: "1rem",
+            fontWeight: 600,
+          }}
+        >
+          Play
+        </button>
+        <button type="button" onClick={handleStop} style={{ padding: "0.5rem 1.25rem", fontSize: "1rem" }}>
+          Stop
+        </button>
+        <span style={{ fontSize: "0.9rem", color: "#555" }}>{status}</span>
+      </div>
+
       <section style={{ marginTop: "1.5rem" }}>
         <h2>Generated Strudel code</h2>
         <MonacoEditor value={source} onChange={handleSourceChange} />
         <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-          <button type="button" onClick={handleEvaluate}>
-            Generate &amp; Play
-          </button>
-          <button type="button" onClick={handleStop}>
-            Stop
-          </button>
           <button type="button" onClick={handleImportCodeIntoGraph}>
             Import code into graph
           </button>
-          <span>{status}</span>
         </div>
         <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
           Parse status: {parseInfo}

@@ -46,6 +46,7 @@ import { getSuggestions } from "./suggestions";
 import "./plugins";
 
 const PATTERN_LIBRARY_STORAGE_KEY = "strudel-studio-pattern-library";
+const SESSION_STORAGE_KEY = "strudel-studio-session";
 
 export interface PatternLibraryEntry {
   id: string;
@@ -406,6 +407,44 @@ export default function App() {
     updateSourceFromGraph(next, mutedLanes);
   }
 
+  /** Slice 8: Save current session to localStorage (one slot). */
+  function handleSaveSession() {
+    try {
+      const payload = {
+        source,
+        graph,
+        sourceIsGraphProjection: sourceIsGraphProjection,
+        mutedLaneIds: [...mutedLanes],
+      };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }
+
+  /** Slice 8: Load session from localStorage. */
+  function handleLoadSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw) as {
+        source?: string;
+        graph?: PatternGraph;
+        sourceIsGraphProjection?: boolean;
+        mutedLaneIds?: string[];
+      };
+      if (typeof data.source !== "string" || !data.graph || !Array.isArray(data.graph.nodes)) return;
+      validatePatternGraph(data.graph);
+      setSource(data.source);
+      setGraph(data.graph);
+      setSourceIsGraphProjection(Boolean(data.sourceIsGraphProjection));
+      setMutedLanes(new Set(data.mutedLaneIds ?? []));
+      setGraphError(null);
+    } catch {
+      // ignore invalid or missing session
+    }
+  }
+
   /** v0.9.1: Change timeline display window and refresh haps from cache (inspector reads only cache). */
   /** v0.9.2: When window !== [0,1], one-shot throttled queryArc (scrub) and merge into cache (architecture §9). */
   function handleTimelineWindowChange(next: { from: number; to: number }) {
@@ -671,6 +710,12 @@ export default function App() {
             ))}
           </select>
         </label>
+        <button type="button" onClick={handleSaveSession} style={{ fontSize: "0.9rem", padding: "0.35rem 0.6rem" }}>
+          Save session
+        </button>
+        <button type="button" onClick={handleLoadSession} style={{ fontSize: "0.9rem", padding: "0.35rem 0.6rem" }}>
+          Load session
+        </button>
       </div>
 
       <section style={{ marginTop: "1.5rem" }}>

@@ -31,6 +31,13 @@ const SAMPLE_URLS = [
 
 const ALIAS_BANK_URL = `${TODEPOND_SAMPLES_BASE}/tidal-drum-machines-alias.json`;
 
+/** Reverse alias: UI kit id (e.g. TR808) -> soundMap prefix (e.g. RolandTR808). Used by getSoundsForBank. */
+const REVERSE_ALIAS: Record<string, string> = {
+  TR808: "RolandTR808",
+  TR909: "RolandTR909",
+  KPR77: "KorgKPR77",
+};
+
 /**
  * Bootstrap code run in a separate evaluate(). URLs come from globalThis so the
  * source has no "/" (avoids mini parse error). Use plain syntax to avoid
@@ -85,22 +92,24 @@ async function loadStrudelWeb(): Promise<StrudelWebModule> {
   return mod;
 }
 
+/** Ensures sample packs are loaded into soundMap (same as used for playback). Idempotent. */
+async function ensureSamplesLoaded(): Promise<StrudelWebModule> {
+  const mod = await loadStrudelWeb();
+  const g = globalThis as Record<string, unknown>;
+  g.__strudelStudioSampleUrls = SAMPLE_URLS;
+  g.__strudelStudioAliasUrl = ALIAS_BANK_URL;
+  await Promise.resolve((mod as StrudelWebModule).evaluate(BOOTSTRAP_SOURCE));
+  return mod as StrudelWebModule;
+}
+
 export function isPattern(value: unknown): value is Pattern {
   return Boolean(value) && typeof (value as any).queryArc === "function";
 }
 
 export async function evaluateToPattern(source: string): Promise<Pattern | null> {
   try {
-    const { evaluate } = await loadStrudelWeb();
-
-    // Pass URLs via globalThis so bootstrap has no "/" in source (avoids mini parse error).
-    const g = globalThis as Record<string, unknown>;
-    g.__strudelStudioSampleUrls = SAMPLE_URLS;
-    g.__strudelStudioAliasUrl = ALIAS_BANK_URL;
-
-    // Run bootstrap in REPL scope (loads sample banks into same soundMap as playback). GM soundfonts registered in loadStrudelWeb.
-    await Promise.resolve(evaluate(BOOTSTRAP_SOURCE));
-
+    const mod = await ensureSamplesLoaded();
+    const { evaluate } = mod;
     const result = (await Promise.resolve(evaluate(source))) as unknown;
 
     if (isPattern(result)) {
@@ -119,6 +128,36 @@ export async function hushAll(): Promise<void> {
 
   if (typeof hushFn === "function") {
     hushFn();
+  }
+}
+
+/**
+ * Returns sample names (mini-notation suffixes) for the given bank id.
+ * Uses the same soundMap as playback; requires samples to be loaded (calls ensureSamplesLoaded).
+ */
+export async function getSoundsForBank(bankId: string): Promise<string[]> {
+  if (!bankId) return [];
+
+  try {
+    await ensureSamplesLoaded();
+    const soundMap = strudelRuntime.webaudio?.soundMap;
+    const raw = typeof soundMap?.get === "function" ? soundMap.get() : undefined;
+    if (raw == null) return [];
+
+    const keys: string[] =
+      raw instanceof Map ? Array.from((raw as Map<string, unknown>).keys()) : Object.keys(raw as Record<string, unknown>);
+    const prefix = REVERSE_ALIAS[bankId] ?? bankId;
+    const prefixWithUnderscore = `${prefix}_`;
+    const suffixes = new Set<string>();
+    for (const k of keys) {
+      if (typeof k === "string" && k.startsWith(prefixWithUnderscore)) {
+        const suffix = k.slice(prefixWithUnderscore.length);
+        if (suffix) suffixes.add(suffix);
+      }
+    }
+    return [...suffixes].sort();
+  } catch {
+    return [];
   }
 }
 

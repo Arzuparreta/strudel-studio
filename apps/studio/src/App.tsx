@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { astVersion, EvalScheduler, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
+import { astVersion, EvalScheduler, getSoundsForBank, HapCache, hushAll } from "@strudel-studio/strudel-bridge";
 import { generateDocument } from "@strudel-studio/code-generator";
 import { parseToAstOrOpaque } from "@strudel-studio/strudel-parser";
 import type { ParseResult } from "@strudel-studio/strudel-parser";
@@ -231,6 +231,8 @@ export default function App() {
   );
 
   const [mutedLanes, setMutedLanes] = useState<Set<string>>(() => new Set());
+  const [soundsInKit, setSoundsInKit] = useState<string[] | null>(null);
+  const [soundsInKitLoading, setSoundsInKitLoading] = useState(false);
 
   /** v1.2 pattern morph: captured A/B and amount 0..1; interpolates numeric args. */
   type MorphSnapshot = {
@@ -287,6 +289,45 @@ export default function App() {
   }, [graph]);
 
   const hapCache = useMemo(() => new HapCache(), []);
+
+  /** Kit id of the selected lane (for sound list). Empty string if no lane or no bank. */
+  const selectedLaneKitId = useMemo(() => {
+    if (selectedGraphNodeId == null) return "";
+    const lane = graph.nodes.find(
+      (n) => n.id === selectedGraphNodeId && n.type === "lane",
+    ) as { head: string } | undefined;
+    if (!lane) return "";
+    const chain = graph.nodes.find(
+      (n) => n.id === lane.head && n.type === "transformChain",
+    ) as { methods: { name: string; args: unknown[] }[] } | undefined;
+    const bankMethod = chain?.methods.find((m) => m.name === "bank");
+    const raw = typeof bankMethod?.args[0] === "string" ? bankMethod.args[0] : "";
+    if (raw === "tr808") return "TR808";
+    if (raw === "tr909") return "TR909";
+    return raw;
+  }, [graph.nodes, selectedGraphNodeId]);
+
+  useEffect(() => {
+    if (!selectedLaneKitId) {
+      setSoundsInKit(null);
+      return;
+    }
+    let cancelled = false;
+    setSoundsInKitLoading(true);
+    getSoundsForBank(selectedLaneKitId)
+      .then((list) => {
+        if (!cancelled) setSoundsInKit(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSoundsInKit([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSoundsInKitLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLaneKitId]);
 
   useEffect(() => {
     return () => {
@@ -888,6 +929,50 @@ export default function App() {
                 </span>
               </>
             )}
+          </div>
+        )}
+        {canEditGraph && selectedLaneKitId && (
+          <div
+            style={{
+              marginBottom: "0.75rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            <div style={{ marginBottom: "0.35rem", fontWeight: 500 }}>
+              Sounds in this kit
+            </div>
+            {soundsInKitLoading ? (
+              <span style={{ color: "#666", fontSize: "0.85rem" }}>
+                Loading…
+              </span>
+            ) : soundsInKit != null && soundsInKit.length > 0 ? (
+              <ul
+                role="list"
+                aria-label="Samples in the selected kit"
+                style={{
+                  margin: 0,
+                  paddingLeft: "1.25rem",
+                  maxHeight: "8rem",
+                  overflowY: "auto",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(4rem, 1fr))",
+                  gap: "0.25rem 0.75rem",
+                  listStyle: "none",
+                }}
+              >
+                {soundsInKit.map((name) => (
+                  <li key={name} role="listitem">
+                    <span style={{ fontFamily: "monospace", fontSize: "0.85rem" }}>
+                      {name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : soundsInKit != null ? (
+              <span style={{ color: "#666", fontSize: "0.85rem" }}>
+                No sounds found for this kit.
+              </span>
+            ) : null}
           </div>
         )}
         <LaneStack

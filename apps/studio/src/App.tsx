@@ -1434,6 +1434,24 @@ export default function App() {
           plugin nodes. Select a lane to rename or delete it; drag cards to
           reorder. Add plugin nodes from the dropdown when any plugin registers a node kind.
         </p>
+        {!canEditGraph ? (
+          <div
+            style={{
+              padding: "2rem 1.5rem",
+              background: "#f5f5f5",
+              borderRadius: "8px",
+              textAlign: "center",
+              color: "#555",
+              fontSize: "0.95rem",
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 500 }}>Pattern builder (new session)</p>
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem" }}>
+              This document is in code mode. Open a template from the transport bar to edit patterns here.
+            </p>
+          </div>
+        ) : (
+        <>
         <div
           style={{
             marginBottom: "0.75rem",
@@ -1715,6 +1733,8 @@ export default function App() {
               : undefined
           }
         />
+        </>
+        )}
       </section>
     </main>
   );

@@ -144,6 +144,55 @@ const demoGraph: PatternGraph = {
   edges: [],
 };
 
+/** Session templates for New session (Slice 5). */
+const TEMPLATES: { id: string; label: string; graph: PatternGraph }[] = [
+  {
+    id: "empty",
+    label: "Empty",
+    graph: {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        { id: "root_parallel", type: "parallel", order: ["lane_1"] },
+        { id: "lane_1", type: "lane", head: "n_1" },
+        {
+          id: "n_1",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    },
+  },
+  {
+    id: "simple-beat",
+    label: "Simple beat",
+    graph: {
+      graphVersion: 2,
+      astVersion: 1,
+      root: "root_parallel",
+      nodes: [
+        { id: "root_parallel", type: "parallel", order: ["lane_beat"] },
+        { id: "lane_beat", type: "lane", head: "n_beat" },
+        {
+          id: "n_beat",
+          type: "transformChain",
+          base: { kind: "s", miniSerialization: "bd sd hh cp" },
+          methods: [],
+        },
+      ],
+      edges: [],
+    },
+  },
+  {
+    id: "drums-bass",
+    label: "Drums + bass",
+    graph: demoGraph,
+  },
+];
+
 export default function App() {
   const [source, setSource] = useState<string>(() =>
     generateDocument(graphToAst(demoGraph)),
@@ -586,6 +635,32 @@ export default function App() {
           Stop
         </button>
         <span style={{ fontSize: "0.9rem", color: "#555" }}>{status}</span>
+        <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem" }}>
+          <span style={{ color: "#555" }}>New session:</span>
+          <select
+            aria-label="New session template"
+            value=""
+            onChange={(e) => {
+              const id = e.target.value;
+              if (!id) return;
+              const template = TEMPLATES.find((t) => t.id === id);
+              if (template) {
+                updateSourceFromGraph(template.graph, new Set());
+                setShowCode(false);
+                setMutedLanes(new Set());
+              }
+              e.target.value = "";
+            }}
+            style={{ fontFamily: "inherit", fontSize: "0.9rem", padding: "0.35rem 0.5rem" }}
+          >
+            <option value="">—</option>
+            {TEMPLATES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <section style={{ marginTop: "1.5rem" }}>

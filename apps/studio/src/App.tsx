@@ -194,11 +194,12 @@ const TEMPLATES: { id: string; label: string; graph: PatternGraph }[] = [
   },
 ];
 
-/** Kit (bank) options for Slice 7 — pick a kit for the selected track. */
+/** Kit (bank) options for Slice 7 — pick a kit for the selected track.
+ *  Bank names must match loaded sample packs (tidal-drum-machines alias: RolandTR808→TR808, etc.). */
 const KIT_OPTIONS: { id: string; label: string }[] = [
   { id: "", label: "No kit" },
-  { id: "tr909", label: "TR-909" },
-  { id: "tr808", label: "TR-808" },
+  { id: "TR909", label: "TR-909" },
+  { id: "TR808", label: "TR-808" },
   { id: "RolandTR909", label: "Roland TR-909" },
   { id: "RolandTR808", label: "Roland TR-808" },
   { id: "KorgKPR77", label: "Korg KPR-77" },
@@ -782,85 +783,113 @@ export default function App() {
             ))}
           </select>
         </div>
-        {canEditGraph &&
-          selectedGraphNodeId != null &&
-          graph.nodes.some(
-            (n) => n.id === selectedGraphNodeId && n.type === "lane",
-          ) && (() => {
-            const lane = graph.nodes.find(
+        {canEditGraph && (
+          <div
+            style={{
+              marginBottom: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            <label htmlFor="track-kit-select">Kit:</label>
+            {selectedGraphNodeId != null &&
+            graph.nodes.some(
               (n) => n.id === selectedGraphNodeId && n.type === "lane",
-            ) as { id: string; head: string } | undefined;
-            const chain = lane
-              ? (graph.nodes.find(
-                  (n) => n.id === lane.head && n.type === "transformChain",
-                ) as { methods: { id: string; name: string; args: unknown[] }[] } | undefined)
-              : undefined;
-            const bankMethod = chain?.methods.find((m) => m.name === "bank");
-            const currentKit = bankMethod?.args[0];
-            const currentKitId =
-              typeof currentKit === "string" ? currentKit : "";
-            return (
-              <div
-                style={{
-                  marginBottom: "0.75rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.9rem",
-                }}
-              >
-                <label htmlFor="track-kit-select">Kit:</label>
+            ) ? (() => {
+              const lane = graph.nodes.find(
+                (n) => n.id === selectedGraphNodeId && n.type === "lane",
+              ) as { id: string; head: string } | undefined;
+              const chain = lane
+                ? (graph.nodes.find(
+                    (n) => n.id === lane.head && n.type === "transformChain",
+                  ) as { methods: { id: string; name: string; args: unknown[] }[] } | undefined)
+                : undefined;
+              const bankMethod = chain?.methods.find((m) => m.name === "bank");
+              const currentKit = bankMethod?.args[0];
+              const rawKitId =
+                typeof currentKit === "string" ? currentKit : "";
+              // Normalize legacy lowercase bank names to match pack (TR808, TR909).
+              const currentKitId =
+                rawKitId === "tr808"
+                  ? "TR808"
+                  : rawKitId === "tr909"
+                    ? "TR909"
+                    : rawKitId;
+              return (
+                <>
+                  <select
+                    id="track-kit-select"
+                    value={currentKitId}
+                    onChange={(e) => {
+                      if (!lane) return;
+                      const kitId = e.target.value;
+                      if (kitId === "") {
+                        if (bankMethod) {
+                          const next = removeTransformFromLane(
+                            graph,
+                            lane.id,
+                            bankMethod.id,
+                          );
+                          updateSourceFromGraph(next, mutedLanes);
+                        }
+                      } else {
+                        if (bankMethod) {
+                          const next = updateLaneTransformArgs(
+                            graph,
+                            lane.id,
+                            bankMethod.id,
+                            [kitId],
+                          );
+                          updateSourceFromGraph(next, mutedLanes);
+                        } else {
+                          const next = addTransformToLane(graph, lane.id, {
+                            name: "bank",
+                            args: [kitId],
+                          });
+                          updateSourceFromGraph(next, mutedLanes);
+                        }
+                      }
+                    }}
+                    style={{
+                      fontFamily: "inherit",
+                      fontSize: "0.9rem",
+                      padding: "0.35rem 0.5rem",
+                    }}
+                  >
+                    {KIT_OPTIONS.map((opt) => (
+                      <option key={opt.id || "none"} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ color: "#666", fontSize: "0.85rem" }}>
+                    Applied to selected track. Press Play to hear the kit.
+                  </span>
+                </>
+              );
+            })() : (
+              <>
                 <select
                   id="track-kit-select"
-                  value={currentKitId}
-                  onChange={(e) => {
-                    if (!lane) return;
-                    const kitId = e.target.value;
-                    if (kitId === "") {
-                      if (bankMethod) {
-                        const next = removeTransformFromLane(
-                          graph,
-                          lane.id,
-                          bankMethod.id,
-                        );
-                        updateSourceFromGraph(next, mutedLanes);
-                      }
-                    } else {
-                      if (bankMethod) {
-                        const next = updateLaneTransformArgs(
-                          graph,
-                          lane.id,
-                          bankMethod.id,
-                          [kitId],
-                        );
-                        updateSourceFromGraph(next, mutedLanes);
-                      } else {
-                        const next = addTransformToLane(graph, lane.id, {
-                          name: "bank",
-                          args: [kitId],
-                        });
-                        updateSourceFromGraph(next, mutedLanes);
-                      }
-                    }
-                  }}
+                  disabled
                   style={{
                     fontFamily: "inherit",
                     fontSize: "0.9rem",
                     padding: "0.35rem 0.5rem",
+                    color: "#888",
                   }}
                 >
-                  {KIT_OPTIONS.map((opt) => (
-                    <option key={opt.id || "none"} value={opt.id}>
-                      {opt.label}
-                    </option>
-                  ))}
+                  <option>—</option>
                 </select>
                 <span style={{ color: "#666", fontSize: "0.85rem" }}>
-                  Applied to selected track.
+                  Click a track above to select it, then choose a kit.
                 </span>
-              </div>
-            );
-          })()}
+              </>
+            )}
+          </div>
+        )}
         <LaneStack
           graph={graph}
           {...(canEditGraph
@@ -971,6 +1000,8 @@ export default function App() {
                   setMutedLanes(next);
                   updateSourceFromGraph(graph, next);
                 },
+                selectedLaneId: selectedGraphNodeId,
+                onSelectLane: (id) => setSelectedGraphNodeId(id),
               }
             : {})}
         />

@@ -42,6 +42,10 @@ export interface LaneStackProps {
   mutedLaneIds?: Set<string>;
   /** Optional callback to toggle mute for a lane. */
   onToggleMute?: (laneId: string) => void;
+  /** Optional currently selected lane id (for Kit, Live control, etc.). */
+  selectedLaneId?: string | null;
+  /** Optional callback when user selects a lane (e.g. by clicking the track row). */
+  onSelectLane?: (laneId: string) => void;
 }
 
 function findNode(graph: PatternGraph, id: string): GraphNode | undefined {
@@ -110,6 +114,8 @@ export function LaneStack({
   onSelectTransformForLane,
   mutedLaneIds,
   onToggleMute,
+  selectedLaneId,
+  onSelectLane,
 }: LaneStackProps) {
   const trackIds = getTopLevelTrackIds(graph);
   const isInteractive =
@@ -170,20 +176,34 @@ export function LaneStack({
           chain.base.miniSerialization,
         );
 
+        const isSelected = selectedLaneId === lane.id;
         return (
           <div
             key={id}
             role="listitem"
+            onClick={(e) => {
+              if (!onSelectLane) return;
+              const el = e.target as HTMLElement;
+              if (el?.closest?.("button") || el?.closest?.("input") || el?.closest?.("select") || el?.closest?.("label")) {
+                return;
+              }
+              onSelectLane(lane.id);
+            }}
             style={{
               padding: "0.5rem 0.75rem",
-              border: "1px solid #ccc",
+              border: isSelected ? "2px solid #0066cc" : "1px solid #ccc",
               borderRadius: "4px",
               fontFamily: "monospace",
               fontSize: "0.9rem",
-              backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#fff",
+              backgroundColor: isSelected
+                ? "#e6f0ff"
+                : index % 2 === 0
+                  ? "#f9f9f9"
+                  : "#fff",
               display: "flex",
               flexDirection: "column",
               gap: "0.5rem",
+              cursor: onSelectLane ? "pointer" : undefined,
             }}
           >
             <div

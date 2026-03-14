@@ -261,20 +261,20 @@ export default function App() {
         setHasOpaques(nextHasOpaques);
 
         if (nextHasAst && !nextHasOpaques) {
-          setParseInfo("parsed: supported subset AST");
+          setParseInfo("Pattern builder: you can edit this in the graph.");
         } else if (nextHasAst && nextHasOpaques) {
-          setParseInfo("parsed: AST with opaque regions");
+          setParseInfo("Pattern builder: part of this can be edited; rest is code-only.");
         } else if (sourceIsGraphProjection && !nextHasAst && nextHasOpaques) {
-          setParseInfo("generated from graph (parser subset unavailable)");
+          setParseInfo("Built from pattern builder.");
         } else if (!nextHasAst && nextHasOpaques) {
-          setParseInfo("parsed: opaque-only (unsupported or complex code)");
+          setParseInfo("Code mode — not editable in the pattern builder. Playback works normally.");
         } else {
           setLastGoodParse(null);
-          setParseInfo("parsed: empty document");
+          setParseInfo("Empty document.");
         }
       } catch {
         if (!cancelled) {
-          setParseInfo("parse error — using last good AST/opaques");
+          setParseInfo("Could not parse; using previous state. Playback may still work.");
         }
       }
     }, 200);
@@ -1552,8 +1552,7 @@ export default function App() {
           })()}
           {!canEditGraph && (
             <span style={{ fontSize: "0.8rem", color: "#777" }}>
-              Editing is disabled while the document contains opaque regions or
-              an unsupported AST.
+              Pattern builder only works for simple lane patterns. This document is in code mode; playback is unaffected.
             </span>
           )}
         </div>

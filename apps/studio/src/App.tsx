@@ -621,123 +621,9 @@ export default function App() {
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>
-        <h2>Pattern inspector</h2>
+        <h2>Tracks</h2>
         <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
-          Read-only view of recent haps from the evaluated pattern.
-          Time window 0–1 is filled at evaluation; other windows use a one-shot scrub (throttled).
-        </p>
-        <HapList haps={haps} laneOrder={inspectorLaneOrder} />
-        <div style={{ marginTop: "1rem" }}>
-          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
-            Pattern timeline (v0.9)
-          </h3>
-          <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
-            Events over time. Generate &amp; Play to see the pattern evolve.
-          </p>
-          <div
-            style={{
-              marginBottom: "0.5rem",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "0.5rem",
-              fontSize: "0.85rem",
-            }}
-          >
-            <span style={{ color: "#555" }}>Time window (cycles):</span>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-              from
-              <input
-                type="number"
-                min={0}
-                step={0.25}
-                value={timelineWindow.from}
-                onChange={(e) =>
-                  handleTimelineWindowChange({
-                    from: Number(e.target.value),
-                    to: timelineWindow.to,
-                  })
-                }
-                style={{
-                  width: "4rem",
-                  fontFamily: "inherit",
-                  fontSize: "0.85rem",
-                  padding: "0.15rem 0.25rem",
-                }}
-                aria-label="Timeline window start (cycles)"
-              />
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-              to
-              <input
-                type="number"
-                min={timelineWindow.from + 0.25}
-                step={0.25}
-                value={timelineWindow.to}
-                onChange={(e) =>
-                  handleTimelineWindowChange({
-                    from: timelineWindow.from,
-                    to: Number(e.target.value),
-                  })
-                }
-                style={{
-                  width: "4rem",
-                  fontFamily: "inherit",
-                  fontSize: "0.85rem",
-                  padding: "0.15rem 0.25rem",
-                }}
-                aria-label="Timeline window end (cycles)"
-              />
-            </label>
-            <span style={{ color: "#888" }}>Presets:</span>
-            {[
-              [0, 1],
-              [1, 2],
-              [0, 2],
-            ].map(([from, to]) => (
-              <button
-                key={`${from}-${to}`}
-                type="button"
-                onClick={() => handleTimelineWindowChange({ from, to })}
-                style={{
-                  fontFamily: "inherit",
-                  fontSize: "0.8rem",
-                  padding: "0.15rem 0.4rem",
-                }}
-              >
-                {from}–{to}
-              </button>
-            ))}
-            <span style={{ color: "#888", fontSize: "0.8rem" }}>
-              Showing {timelineWindow.from}–{timelineWindow.to}{" "}
-              {timelineWindow.from === 0 && timelineWindow.to === 1
-                ? "(from last play)"
-                : "(scrub)"}
-            </span>
-          </div>
-          <HapTimeline
-            haps={haps}
-            timeWindow={timelineWindow}
-            laneOrder={inspectorLaneOrder}
-          />
-        </div>
-        <div style={{ marginTop: "0.75rem" }}>
-          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
-            Lane transform summary
-          </h3>
-          <p style={{ fontSize: "0.85rem", color: "#555" }}>
-            Read-only summary of each lane&apos;s base pattern and transform
-            chain, derived from the current PatternGraph.
-          </p>
-          {renderTransformSummary(graph)}
-        </div>
-      </section>
-
-      <section style={{ marginTop: "1.5rem" }}>
-        <h2>Multi-track graph</h2>
-        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
-          Stacked lanes from pattern graph (parallel root). Compile to code to
-          insert the generated Strudel into the editor above.
+          Your tracks. Add, mute, and edit patterns per track. Use &quot;Compile to code&quot; to apply changes.
         </p>
         <div
           style={{
@@ -749,7 +635,7 @@ export default function App() {
             color: "#555",
           }}
         >
-          <span>Default for new lanes (each lane can override below):</span>
+          <span>Default for new tracks (each track can override below):</span>
           <select
             value={selectedTransformName}
             onChange={(e) => setSelectedTransformName(e.target.value)}
@@ -901,6 +787,121 @@ export default function App() {
               {graphError}
             </span>
           )}
+        </div>
+      </section>
+
+
+
+            <section style={{ marginTop: "1.5rem" }}>
+        <h2>Pattern inspector</h2>
+        <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: "0.5rem" }}>
+          Read-only view of recent haps from the evaluated pattern.
+          Time window 0–1 is filled at evaluation; other windows use a one-shot scrub (throttled).
+        </p>
+        <HapList haps={haps} laneOrder={inspectorLaneOrder} />
+        <div style={{ marginTop: "1rem" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+            Pattern timeline (v0.9)
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "#555", marginBottom: "0.5rem" }}>
+            Events over time. Generate &amp; Play to see the pattern evolve.
+          </p>
+          <div
+            style={{
+              marginBottom: "0.5rem",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.85rem",
+            }}
+          >
+            <span style={{ color: "#555" }}>Time window (cycles):</span>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              from
+              <input
+                type="number"
+                min={0}
+                step={0.25}
+                value={timelineWindow.from}
+                onChange={(e) =>
+                  handleTimelineWindowChange({
+                    from: Number(e.target.value),
+                    to: timelineWindow.to,
+                  })
+                }
+                style={{
+                  width: "4rem",
+                  fontFamily: "inherit",
+                  fontSize: "0.85rem",
+                  padding: "0.15rem 0.25rem",
+                }}
+                aria-label="Timeline window start (cycles)"
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              to
+              <input
+                type="number"
+                min={timelineWindow.from + 0.25}
+                step={0.25}
+                value={timelineWindow.to}
+                onChange={(e) =>
+                  handleTimelineWindowChange({
+                    from: timelineWindow.from,
+                    to: Number(e.target.value),
+                  })
+                }
+                style={{
+                  width: "4rem",
+                  fontFamily: "inherit",
+                  fontSize: "0.85rem",
+                  padding: "0.15rem 0.25rem",
+                }}
+                aria-label="Timeline window end (cycles)"
+              />
+            </label>
+            <span style={{ color: "#888" }}>Presets:</span>
+            {[
+              [0, 1],
+              [1, 2],
+              [0, 2],
+            ].map(([from, to]) => (
+              <button
+                key={`${from}-${to}`}
+                type="button"
+                onClick={() => handleTimelineWindowChange({ from, to })}
+                style={{
+                  fontFamily: "inherit",
+                  fontSize: "0.8rem",
+                  padding: "0.15rem 0.4rem",
+                }}
+              >
+                {from}–{to}
+              </button>
+            ))}
+            <span style={{ color: "#888", fontSize: "0.8rem" }}>
+              Showing {timelineWindow.from}–{timelineWindow.to}{" "}
+              {timelineWindow.from === 0 && timelineWindow.to === 1
+                ? "(from last play)"
+                : "(scrub)"}
+            </span>
+          </div>
+          <HapTimeline
+            haps={haps}
+            timeWindow={timelineWindow}
+            laneOrder={inspectorLaneOrder}
+          />
+        </div>
+        <div style={{ marginTop: "0.75rem" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+            Lane transform summary
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "#555" }}>
+            Read-only summary of each lane&apos;s base pattern and transform
+            chain, derived from the current PatternGraph.
+          </p>
+          {renderTransformSummary(graph)}
         </div>
       </section>
 

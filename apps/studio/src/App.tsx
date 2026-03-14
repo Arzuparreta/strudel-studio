@@ -380,7 +380,7 @@ export default function App() {
     const result = parseToAstOrOpaque(source);
     if (result.ast == null) {
       setGraphError(
-        "Cannot import: code could not be parsed to a graph (unsupported or opaque).",
+        "This code uses Strudel features that cannot yet be converted to the visual graph. The code will still run normally.",
       );
       return;
     }

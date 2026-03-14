@@ -53,6 +53,9 @@ importers:
       '@strudel-studio/ui-components':
         specifier: workspace:*
         version: link:../../packages/ui-components
+      '@strudel/web':
+        specifier: 1.3.0
+        version: 1.3.0
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -175,7 +178,16 @@ importers:
       '@strudel/core':
         specifier: 1.2.6
         version: 1.2.6
+      '@strudel/soundfonts':
+        specifier: 1.3.0
+        version: 1.3.0
       '@strudel/web':
+        specifier: 1.3.0
+        version: 1.3.0
+      '@strudel/webaudio':
+        specifier: 1.3.0
+        version: 1.3.0
+      superdough:
         specifier: 1.3.0
         version: 1.3.0
     devDependencies:
@@ -910,6 +922,10 @@ packages:
 
   '@strudel/mini@1.2.6':
     resolution: {integrity: sha512-I5GFPLHI3TPcJuD2RdDcurA+lTogaSQ0TB+EimKTgEtSAbU6ZMEkSUOXZIFO5eaAcJcMucgKaBcmTKpD4oZjPA==}
+    engines: {node: '>=18.0.0'}
+
+  '@strudel/soundfonts@1.3.0':
+    resolution: {integrity: sha512-gr92e5gC+57KKqRolZYu0Qf7McKfrY9URHCp7UxpMhnd39utKekfBnD8WLnvv5jrYmbBuKvx/IYpaIxo51CgXQ==}
     engines: {node: '>=18.0.0'}
 
   '@strudel/tonal@1.2.6':
@@ -1726,6 +1742,9 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  sfumato@0.1.2:
+    resolution: {integrity: sha512-j2s5BLUS5VUNtaK1l+v+yal3XjjV7JXCQIwE5Xs4yiQ3HJ+2Fc/dd3IkkrVHn0AJO2epShSWVoP3GnE0TvPdMg==}
+
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -1736,6 +1755,12 @@ packages:
 
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
+
+  soundfont2@0.4.0:
+    resolution: {integrity: sha512-537WiurDBRbDLVhJMxXLE06D6yWxJCidfPClnibZ0f8dKMDpv+0fIfwCQ8pELE0JqKX05SOJosNJgKzQobaAEA==}
+
+  soundfont2@0.5.0:
+    resolution: {integrity: sha512-dcmNVtHT/Y8BOOrtmjt7hn6Bk6bB1g+O2bWB9fa6emW7kfwiEiEL4VvGQfwVt8g0m58LyoqVyuQ4ZFukMLwGHQ==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -2494,6 +2519,13 @@ snapshots:
   '@strudel/mini@1.2.6':
     dependencies:
       '@strudel/core': 1.2.6
+
+  '@strudel/soundfonts@1.3.0':
+    dependencies:
+      '@strudel/core': 1.2.6
+      '@strudel/webaudio': 1.3.0
+      sfumato: 0.1.2
+      soundfont2: 0.5.0
 
   '@strudel/tonal@1.2.6':
     dependencies:
@@ -3507,6 +3539,10 @@ snapshots:
 
   semver@7.7.4: {}
 
+  sfumato@0.1.2:
+    dependencies:
+      soundfont2: 0.4.0
+
   shebang-command@2.0.0:
     dependencies:
       shebang-regex: 3.0.0
@@ -3514,6 +3550,10 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   siginfo@2.0.0: {}
+
+  soundfont2@0.4.0: {}
+
+  soundfont2@0.5.0: {}
 
   source-map-js@1.2.1: {}
 

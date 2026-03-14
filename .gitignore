@@ -3,6 +3,7 @@
 .aider.input.history
 
 .cursor
+.cursorrules
 
 node_modules
 dist
@@ -25,6 +26,8 @@ coverage
 docs/architecture.md
 docs/project-roadmap.md
 docs/sync-policy.md
+docs/product-vision.md
+
 
 apps/studio/dist
 apps/studio/node_modules

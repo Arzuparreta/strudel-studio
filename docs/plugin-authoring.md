@@ -1,5 +1,7 @@
 # Plugin authoring guide
 
+**Audience:** Developers extending the editor. Musicians use the main Studio UI; plugins are optional.
+
 This guide explains how to extend Strudel Studio with a plugin. Plugins can add **custom transforms** that appear in the editor’s “+ Add transform” picker and can optionally provide a **transform function** for custom graph/AST generation.
 
 ## 1. Plugin package setup

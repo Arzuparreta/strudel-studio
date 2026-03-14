@@ -11,6 +11,5 @@ Requires **Node 18+** and **pnpm** (e.g. `corepack enable` then `pnpm install`, 
 ```bash
 pnpm install
 pnpm build    # build all packages and app
-pnpm test     # run tests in all workspaces
 pnpm dev      # start the Studio app (Vite dev server)
 ```

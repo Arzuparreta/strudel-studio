@@ -152,6 +152,7 @@ export default function App() {
   const [sourceIsGraphProjection, setSourceIsGraphProjection] =
     useState<boolean>(true);
   const [status, setStatus] = useState<string>("idle");
+  const [showCode, setShowCode] = useState<boolean>(false);
   const [parseInfo, setParseInfo] = useState<string>("not parsed yet");
   const [graphError, setGraphError] = useState<string | null>(null);
   const [selectedTransformName, setSelectedTransformName] =
@@ -588,19 +589,35 @@ export default function App() {
       </div>
 
       <section style={{ marginTop: "1.5rem" }}>
-        <h2>Generated Strudel code</h2>
-        <MonacoEditor value={source} onChange={handleSourceChange} />
-        <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-          <button type="button" onClick={handleImportCodeIntoGraph}>
-            Import code into graph
-          </button>
-        </div>
-        <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
-          Parse status: {parseInfo}
-        </p>
-        <p style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#888" }}>
-          If you hear sound after Generate &amp; Play, the pattern is running.
-        </p>
+        {showCode ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <h2 style={{ margin: 0 }}>Code (advanced)</h2>
+              <button type="button" onClick={() => setShowCode(false)}>
+                Hide code
+              </button>
+            </div>
+            <MonacoEditor value={source} onChange={handleSourceChange} />
+            <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+              <button type="button" onClick={handleImportCodeIntoGraph}>
+                Import code into graph
+              </button>
+            </div>
+            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
+              Parse status: {parseInfo}
+            </p>
+            <p style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#888" }}>
+              If you hear sound after Play, the pattern is running.
+            </p>
+          </>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button type="button" onClick={() => setShowCode(true)} style={{ fontSize: "0.9rem" }}>
+              Show code (advanced)
+            </button>
+            <span style={{ fontSize: "0.85rem", color: "#666" }}>{parseInfo}</span>
+          </div>
+        )}
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>
